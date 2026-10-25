@@ -4,16 +4,16 @@
 PlayerSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 28
-  productGUID: ec1f042aa142ef04685fc1dd7350eea2
+  productGUID: 2887def80e9f9a646b1407e39200b4e0
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
   AndroidEnableSustainedPerformanceMode: 0
-  defaultScreenOrientation: 2
+  defaultScreenOrientation: 4
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: PAMELA STUDIOS
-  productName: ToxicGhost-ProjectUnity
+  companyName: DefaultCompany
+  productName: "DON\xB4T GHOST ME"
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -826,8 +826,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Android: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
-    Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
+    Standalone: SENTIS_ANALYTICS_ENABLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
@@ -848,14 +847,14 @@ PlayerSettings:
   editorAssembliesCompatibilityLevel: 1
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: ToxicGhost-ProjectUnity
+  metroPackageName: "DON\xB4T GHOST ME"
   metroPackageVersion: 
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
   metroCertificateIssuer: 
   metroCertificateNotAfter: 0000000000000000
-  metroApplicationDescription: ToxicGhost-ProjectUnity
+  metroApplicationDescription: "DON\xB4T GHOST ME"
   wsaImages: {}
   metroTileShortName: 
   metroTileShowName: 0
@@ -924,13 +923,13 @@ PlayerSettings:
   qnxGraphicConfPath: 
   apiCompatibilityLevel: 6
   captureStartupLogs: {}
-  activeInputHandler: 2
+  activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: c0ed5cc8-d0e8-4a8b-8539-7ce9f074b44c
+  cloudProjectId: f55cf929-bdf9-4f21-a23d-247f53fac27b
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: ToxicGhost-ProjectUnity
-  organizationId: snobra
+  projectName: "DON\xB4T GHOST ME"
+  organizationId: eliecerperez16
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
