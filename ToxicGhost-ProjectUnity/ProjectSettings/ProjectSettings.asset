@@ -826,6 +826,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
+    Android: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
     Standalone: SENTIS_ANALYTICS_ENABLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
@@ -925,11 +926,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: f55cf929-bdf9-4f21-a23d-247f53fac27b
+  cloudProjectId: c0ed5cc8-d0e8-4a8b-8539-7ce9f074b44c
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: "DON\xB4T GHOST ME"
-  organizationId: eliecerperez16
+  projectName: ToxicGhost-ProjectUnity
+  organizationId: snobra
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

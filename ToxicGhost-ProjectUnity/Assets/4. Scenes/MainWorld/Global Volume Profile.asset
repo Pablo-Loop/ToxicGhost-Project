@@ -1,5 +1,27 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9090239110841392013
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5485954d14dfb9a4c8ead8edb0ded5b1, type: 3}
+  m_Name: LiftGammaGain
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.LiftGammaGain
+  active: 1
+  lift:
+    m_OverrideState: 0
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+  gamma:
+    m_OverrideState: 1
+    m_Value: {x: 0.9999999, y: 0.99999964, z: 1, w: 0.22393824}
+  gain:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: -0.43243244}
 --- !u!114 &-1158424793176957891
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -21,7 +43,7 @@ MonoBehaviour:
     m_Value: {x: 0.83885264, y: 1, z: 0.8229914, w: 0.39603963}
   highlights:
     m_OverrideState: 0
-    m_Value: {x: 0.092122555, y: 1, z: 0, w: 0}
+    m_Value: {x: 0.9858294, y: 1, z: 0.9927725, w: 0}
   shadowsStart:
     m_OverrideState: 0
     m_Value: 0
@@ -49,6 +71,8 @@ MonoBehaviour:
   components:
   - {fileID: -1158424793176957891}
   - {fileID: 500676185260501268}
+  - {fileID: -9090239110841392013}
+  - {fileID: 5675673266470850948}
 --- !u!114 &500676185260501268
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -77,3 +101,25 @@ MonoBehaviour:
   saturation:
     m_OverrideState: 1
     m_Value: 66.1
+--- !u!114 &5675673266470850948
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70afe9e12c7a7ed47911bb608a23a8ff, type: 3}
+  m_Name: SplitToning
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.SplitToning
+  active: 1
+  shadows:
+    m_OverrideState: 1
+    m_Value: {r: 0.4716981, g: 0.4716981, b: 0.4716981, a: 1}
+  highlights:
+    m_OverrideState: 0
+    m_Value: {r: 0.8679245, g: 0.8679245, b: 0.8679245, a: 1}
+  balance:
+    m_OverrideState: 0
+    m_Value: 0
