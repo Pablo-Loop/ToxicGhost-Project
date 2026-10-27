@@ -7,13 +7,14 @@ public class CameraLookArea : MonoBehaviour,
     IDragHandler,
     IInitializePotentialDragHandler
 {
-    [SerializeField] private CrashCameraFollow cameraController;
+    [SerializeField]
+    private CrashCameraFollow cameraController;
 
     private int? activePointerId;
 
-    public void OnInitializePotentialDrag(PointerEventData eventData)
+    public void OnInitializePotentialDrag(
+        PointerEventData eventData)
     {
-        // Evita esperar al umbral de arrastre de la UI.
         eventData.useDragThreshold = false;
     }
 
@@ -25,6 +26,7 @@ public class CameraLookArea : MonoBehaviour,
 
     public void OnDrag(PointerEventData eventData)
     {
+        // Solo controla la cámara el dedo que inició este gesto.
         if (!activePointerId.HasValue ||
             eventData.pointerId != activePointerId.Value)
         {

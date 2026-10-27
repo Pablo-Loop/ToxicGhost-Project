@@ -6,7 +6,7 @@ public class CrashCameraFollow : MonoBehaviour
     [Header("Objetivo")]
     [SerializeField] private Transform target;
 
-    [Tooltip("Punto al que mira, relativo a la posición del jugador.")]
+    [Tooltip("Punto de enfoque respecto a la posición del jugador.")]
     [SerializeField]
     private Vector3 targetOffset =
         new Vector3(0f, 0.5f, 0f);
@@ -19,17 +19,26 @@ public class CrashCameraFollow : MonoBehaviour
     [SerializeField] private float minPitch = -10f;
     [SerializeField] private float maxPitch = 60f;
 
-    [Tooltip("Grados por arrastre de un ancho/alto corto de pantalla.")]
-    [SerializeField, Min(1f)] private float touchSensitivity = 180f;
+    [Tooltip("Grados de giro por arrastre de un lado corto de pantalla.")]
+    [SerializeField, Min(1f)]
+    private float touchSensitivity = 180f;
 
-    [SerializeField, Min(0.01f)] private float orbitSmoothTime = 0.08f;
+    [SerializeField, Min(0.01f)]
+    private float orbitSmoothTime = 0.08f;
+
     [SerializeField] private bool invertVertical;
 
     [Header("Obstáculos")]
     [SerializeField] private LayerMask obstacleLayers;
-    [SerializeField, Min(0.01f)] private float collisionRadius = 0.3f;
-    [SerializeField, Min(0f)] private float collisionPadding = 0.08f;
-    [SerializeField, Min(0.01f)] private float returnSpeed = 8f;
+
+    [SerializeField, Min(0.01f)]
+    private float collisionRadius = 0.3f;
+
+    [SerializeField, Min(0f)]
+    private float collisionPadding = 0.08f;
+
+    [SerializeField, Min(0.01f)]
+    private float returnSpeed = 8f;
 
     private float desiredYaw;
     private float desiredPitch;
@@ -45,7 +54,11 @@ public class CrashCameraFollow : MonoBehaviour
     {
         if (target == null)
         {
-            Debug.LogError("Falta asignar Target a la cámara.", this);
+            Debug.LogError(
+                "CrashCameraFollow: asigna Target.",
+                this
+            );
+
             enabled = false;
             return;
         }
@@ -53,9 +66,12 @@ public class CrashCameraFollow : MonoBehaviour
         ResetView();
     }
 
-    // Recibe desplazamiento del dedo en píxeles.
+    // El área táctil envía el desplazamiento en píxeles.
     public void AddLookDelta(Vector2 screenDelta)
     {
+        if (!isActiveAndEnabled)
+            return;
+
         float screenSize = Mathf.Max(
             1f,
             Mathf.Min(Screen.width, Screen.height)
@@ -97,8 +113,7 @@ public class CrashCameraFollow : MonoBehaviour
         Quaternion orbit =
             Quaternion.Euler(currentPitch, currentYaw, 0f);
 
-        // Usa la posición visual interpolada del Rigidbody.
-        // Sigue también la altura del salto.
+        // Sigue también la altura del personaje al saltar.
         Vector3 pivot = target.position + targetOffset;
         Vector3 backward = orbit * Vector3.back;
 
@@ -119,15 +134,16 @@ public class CrashCameraFollow : MonoBehaviour
             );
         }
 
-        // Acercamiento inmediato para no suavizar a través de una pared.
-        // Regreso progresivo cuando vuelve a haber espacio.
         if (allowedDistance < currentDistance)
         {
+            // Acercamiento inmediato para evitar atravesar la pared.
             currentDistance = allowedDistance;
         }
         else
         {
-            float blend = 1f - Mathf.Exp(-returnSpeed * Time.deltaTime);
+            // Recupera suavemente la distancia cuando hay espacio.
+            float blend =
+                1f - Mathf.Exp(-returnSpeed * Time.deltaTime);
 
             currentDistance = Mathf.Lerp(
                 currentDistance,
@@ -136,15 +152,16 @@ public class CrashCameraFollow : MonoBehaviour
             );
         }
 
-        transform.position = pivot + backward * currentDistance;
+        transform.position =
+            pivot + backward * currentDistance;
 
-        // El jugador permanece como centro del encuadre.
         transform.rotation = Quaternion.LookRotation(
             pivot - transform.position,
             Vector3.up
         );
     }
 
+    // También puede llamarse después de un respawn.
     public void ResetView()
     {
         desiredYaw = currentYaw = initialYaw;
