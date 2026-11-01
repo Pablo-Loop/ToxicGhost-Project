@@ -4526,6 +4526,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ToxicitySystem
   toxicidad: 30
   barraToxicidad: {fileID: 1853590548}
+  rellenoToxicidad: {fileID: 732146793}
+  colorBajo: {r: 1, g: 0.7529412, b: 0.79607844, a: 1}
+  colorAlto: {r: 0.39215687, g: 0, b: 0.09803922, a: 1}
   tiempoLimite: 10
   aumentoPorSegundo: 2
   llamadaLiam: {fileID: 1846245427}

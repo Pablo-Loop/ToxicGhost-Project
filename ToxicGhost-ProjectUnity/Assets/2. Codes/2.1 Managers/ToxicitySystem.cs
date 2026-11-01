@@ -9,6 +9,11 @@ public class ToxicitySystem : MonoBehaviour
     public float toxicidad = 30f;
 
     public Slider barraToxicidad;
+    [Header("Colores de toxicidad")]
+    public Image rellenoToxicidad;
+
+    public Color colorBajo = new Color32(255, 192, 203, 255);
+    public Color colorAlto = new Color32(100, 0, 25, 255);
 
     [Header("Tiempo de respuesta")]
     public float tiempoLimite = 10f;
@@ -85,11 +90,23 @@ public class ToxicitySystem : MonoBehaviour
         }
     }
 
+        
     void ActualizarBarra()
     {
         if (barraToxicidad != null)
         {
             barraToxicidad.value = toxicidad;
+        }
+
+        if (rellenoToxicidad != null)
+        {
+            float porcentaje = toxicidad / 100f;
+
+            rellenoToxicidad.color = Color.Lerp(
+                colorBajo,
+                colorAlto,
+                porcentaje
+            );
         }
     }
 
