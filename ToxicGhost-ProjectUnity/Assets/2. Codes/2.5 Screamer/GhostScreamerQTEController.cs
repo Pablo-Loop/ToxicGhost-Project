@@ -30,7 +30,7 @@ public class GhostScreamerQTEController : MonoBehaviour
     private GameObject fantasmaActual;
     private FantasmaQTE movimientoFantasma;
     private bool eventoActivo = false;
-    private bool eventoUtilizado = false;
+  
 
     [Header("Tiempo y Screamer")]
     public float tiempoLimite = 6f;
@@ -41,45 +41,45 @@ public class GhostScreamerQTEController : MonoBehaviour
     private float tiempoRestante;
     private bool mostrandoScreamer = false;
 
-    public void IniciarEvento()
+    public bool IniciarEvento(Transform spawnDeZona)
     {
-        if (eventoActivo || eventoUtilizado)
-            return;
+        // No iniciar otro QTE mientras haya uno activo
+        // o mientras se esté mostrando el Screamer.
+        if (eventoActivo || mostrandoScreamer)
+            return false;
 
-        if (prefabFantasma == null || puntoSpawn == null || jugador == null)
+        if (prefabFantasma == null || spawnDeZona == null || jugador == null)
         {
             Debug.LogWarning("Faltan referencias del Ghost Screamer QTE.");
-            return;
+            return false;
         }
 
-        eventoActivo = true;
-        eventoUtilizado = true;
-        tiempoRestante = tiempoLimite;
-        BloquearControles();
+        // Comprobar el prefab antes de bloquear controles.
+        if (prefabFantasma.GetComponent<FantasmaQTE>() == null)
+        {
+            Debug.LogError("El prefab no tiene el script FantasmaQTE.");
+            return false;
+        }
 
         fantasmaActual = Instantiate(
             prefabFantasma,
-            puntoSpawn.position,
-            puntoSpawn.rotation
+            spawnDeZona.position,
+            spawnDeZona.rotation
         );
 
         movimientoFantasma = fantasmaActual.GetComponent<FantasmaQTE>();
 
-        if (movimientoFantasma == null)
-        {
-            Debug.LogError("El prefab no tiene el script FantasmaQTE.");
-            Destroy(fantasmaActual);
-            eventoActivo = false;
-            eventoUtilizado = false;
-            return;
-        }
+        eventoActivo = true;
+        tiempoRestante = tiempoLimite;
+
+        BloquearControles();
 
         movimientoFantasma.velocidad = velocidadFantasma;
         movimientoFantasma.distanciaScreamer = distanciaScreamer;
         movimientoFantasma.IniciarPersecucion(jugador);
 
-            if (textoReacciona != null)
-        textoReacciona.SetActive(true);
+        if (textoReacciona != null)
+            textoReacciona.SetActive(true);
 
         if (botonElectrocutar != null)
         {
@@ -88,9 +88,11 @@ public class GhostScreamerQTEController : MonoBehaviour
         }
 
         Debug.Log("Ghost Screamer QTE iniciado.");
+        return true;
     }
 
-        void Update()
+     
+    void Update()
     {
         if (!eventoActivo || movimientoFantasma == null)
             return;
