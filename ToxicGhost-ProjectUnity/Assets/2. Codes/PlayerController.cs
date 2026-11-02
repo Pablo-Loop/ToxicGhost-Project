@@ -6,6 +6,8 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Referencias")]
     [SerializeField] private Transform groundCheck;
+    [SerializeField] private Animator animator;
+    [SerializeField] private string runParamName = "isRunning";
 
     [Tooltip("Asigna Main Camera.")]
     [SerializeField] private Transform movementReference;
@@ -70,6 +72,9 @@ public class PlayerController : MonoBehaviour
     {
         body = GetComponent<Rigidbody>();
 
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
         if (movementReference == null && Camera.main != null)
             movementReference = Camera.main.transform;
 
@@ -88,24 +93,39 @@ public class PlayerController : MonoBehaviour
     {
         ReadInput();
 
-        bool hasInput =
-            moveInput.sqrMagnitude >
-            movementDeadZone * movementDeadZone;
+        bool hasInput = moveInput.sqrMagnitude > movementDeadZone * movementDeadZone;
 
         if (!hasInput)
         {
             moveInput = Vector2.zero;
             movementStarted = false;
-            return;
         }
-
-        // Captura la cámara al comenzar cada desplazamiento.
-        // No vuelve a capturarla mientras el joystick siga activo.
-        if (!movementStarted)
+        else if (!movementStarted)
         {
             CaptureMovementReference();
             movementStarted = true;
         }
+
+        UpdateAnimations();
+    }
+
+    private void UpdateAnimations()
+    {
+        if (animator == null) return;
+
+        // Detecta si hay intención de movimiento activa en el marco actual
+        bool hasInput = moveInput.sqrMagnitude > 0.001f;
+
+        // Está corriendo si hay entrada de control Y el personaje está sobre el suelo
+        bool isRunning = hasInput && IsGrounded;
+
+        // Imprime en consola cuando intentas moverte para diagnosticar
+        if (hasInput)
+        {
+            Debug.Log($"[Animación] Input detectado: {hasInput} | Tocando Suelo (IsGrounded): {IsGrounded} => Envia a Animator: {isRunning}");
+        }
+
+        animator.SetBool(runParamName, isRunning);
     }
 
     private void ReadInput()
@@ -200,7 +220,6 @@ public class PlayerController : MonoBehaviour
 
         Velocity = velocity;
 
-        // Solo el movimiento orienta al personaje.
         if (direction.sqrMagnitude > 0.001f)
         {
             Quaternion targetRotation =

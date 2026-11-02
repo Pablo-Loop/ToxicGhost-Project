@@ -41,7 +41,7 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Hanging Ghost - IDLE
+      name: Hanging - IDLE
       takeName: Hanging Ghost|ArmatureAction
       internalID: 558016515361307696
       firstFrame: 0
@@ -70,7 +70,7 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: Hanging Ghost - Atack
+      name: Hanging - Atack
       takeName: Hanging Ghost|ArmatureAction
       internalID: -8879161069336286439
       firstFrame: 106

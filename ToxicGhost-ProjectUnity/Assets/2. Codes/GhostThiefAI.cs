@@ -19,6 +19,11 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField] private PhoneState phone;
     [SerializeField] private Transform[] patrolPoints;
 
+    [Header("Animación")]
+    [SerializeField] private Animator animator;
+    [SerializeField] private string spotPlayerParam = "spotPlayer";
+    [SerializeField] private string isRunningParam = "isRunning";
+
     [Header("Visión")]
     [SerializeField] private LayerMask obstacleLayers;
     [SerializeField, Min(0.1f)] private float visionRange = 9f;
@@ -61,6 +66,9 @@ public class GhostThiefAI : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         reusablePath = new NavMeshPath();
+
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
     }
 
     private void Start()
@@ -92,6 +100,9 @@ public class GhostThiefAI : MonoBehaviour
 
     private void Update()
     {
+        // Actualizamos los parámetros visuales del Animator en cada frame
+        UpdateAnimations();
+
         if (!agent.isOnNavMesh || Time.time < nextThink)
             return;
 
@@ -118,6 +129,19 @@ public class GhostThiefAI : MonoBehaviour
         }
     }
 
+    private void UpdateAnimations()
+    {
+        if (animator == null) return;
+
+        // Se considera corriendo si se desplaza activamente a cierta velocidad en el NavMesh
+        bool isMoving = agent.isOnNavMesh && !agent.isStopped && agent.velocity.sqrMagnitude > 0.05f;
+        animator.SetBool(isRunningParam, isMoving);
+
+        // Activamos spotPlayer únicamente mientras esté en estado de persecución
+        bool isChasing = (state == State.Chase);
+        animator.SetBool(spotPlayerParam, isChasing);
+    }
+
     private void UpdatePatrol()
     {
         if (phone.HasPhone && CanSeePlayer())
@@ -138,7 +162,6 @@ public class GhostThiefAI : MonoBehaviour
 
     private void UpdateChase()
     {
-        // Otro enemigo pudo haber robado el teléfono.
         if (!phone.HasPhone)
         {
             ReturnToPatrol();
@@ -164,9 +187,6 @@ public class GhostThiefAI : MonoBehaviour
         {
             ReturnToPatrol();
         }
-
-        // Sin visión, sigue únicamente hacia la última posición
-        // enviada al agente; no conoce la ubicación nueva del jugador.
     }
 
     private bool CanSeePlayer()
@@ -213,7 +233,6 @@ public class GhostThiefAI : MonoBehaviour
 
     private void StealPhone()
     {
-        // Se revalida la posesión para evitar robos simultáneos.
         if (!phone.TrySteal(this))
         {
             ReturnToPatrol();
@@ -238,7 +257,6 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
-        // Mantener el destino evita calcular rutas en cada frame.
         if (agent.hasPath && agent.remainingDistance > 1f)
             return;
 
@@ -254,7 +272,6 @@ public class GhostThiefAI : MonoBehaviour
         Vector3 bestPosition = transform.position;
         bool found = false;
 
-        // Examina varias salidas y acepta solo rutas completas.
         for (int i = 0; i < 8; i++)
         {
             Vector3 direction =
@@ -310,7 +327,6 @@ public class GhostThiefAI : MonoBehaviour
 
     private void GoToNextPatrolPoint()
     {
-        // Prueba cada punto una vez por llamada.
         for (int i = 0; i < patrolPoints.Length; i++)
         {
             Transform point = patrolPoints[patrolIndex];
@@ -348,7 +364,6 @@ public class GhostThiefAI : MonoBehaviour
 
     public void TryRecover()
     {
-        // El botón puede haber quedado visible desde el frame anterior.
         if (!CanRecover() || !phone.TryRecover(this))
             return;
 
