@@ -5394,13 +5394,15 @@ MonoBehaviour:
   prefabFantasma: {fileID: 3040782925266192152, guid: 7447b54491625f84aa7e04e0eb7c851f, type: 3}
   puntoSpawn: {fileID: 1081945240}
   jugador: {fileID: 1290208557}
+  camaraJugador: {fileID: 2036436296}
   textoReacciona: {fileID: 2134315255}
   botonElectrocutar: {fileID: 393612143}
   areaCanvas: {fileID: 875266136}
-  controlMovimiento: {fileID: 0}
-  controlCamara: {fileID: 0}
+  controlMovimiento: {fileID: 1290208559}
+  controlCamara: {fileID: 779707971}
   velocidadFantasma: 1.5
   distanciaScreamer: 1.5
+  distanciaAparicion: 10
   tiempoLimite: 6
   imagenScreamer: {fileID: 566482640}
   sonidoScreamer: {fileID: 2083111797}
@@ -8004,7 +8006,7 @@ GameObject:
   - component: {fileID: 779707967}
   - component: {fileID: 779707970}
   - component: {fileID: 779707969}
-  - component: {fileID: 779707968}
+  - component: {fileID: 779707971}
   m_Layer: 5
   m_Name: LookArea
   m_TagString: Untagged
@@ -8031,19 +8033,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &779707968
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 779707966}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdd6fa048af417845aa04e4fb4a26499, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraLookArea
-  cameraController: {fileID: 0}
 --- !u!114 &779707969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8082,6 +8071,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 779707966}
   m_CullTransparentMesh: 1
+--- !u!114 &779707971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 779707966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdd6fa048af417845aa04e4fb4a26499, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraLookArea
+  cameraController: {fileID: 0}
 --- !u!1001 &783758108
 PrefabInstance:
   m_ObjectHideFlags: 0
