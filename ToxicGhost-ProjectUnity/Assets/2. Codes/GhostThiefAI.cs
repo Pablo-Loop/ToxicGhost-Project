@@ -25,7 +25,9 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField] private string isRunningParam = "isRunning";
 
     [Header("Visión")]
+    [Tooltip("Solo capas que bloquean la vista. Excluir jugador y enemigo.")]
     [SerializeField] private LayerMask obstacleLayers;
+
     [SerializeField, Min(0.1f)] private float visionRange = 9f;
     [SerializeField, Range(1f, 180f)] private float visionAngle = 90f;
     [SerializeField, Min(0f)] private float loseSightDelay = 1.5f;
@@ -36,8 +38,13 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField, Min(0f)] private float fleeSpeed = 4.5f;
 
     [Header("Interacción")]
-    [SerializeField, Min(0.1f)] private float stealDistance = 1.4f;
+    [SerializeField, Min(0.1f)] private float stealDistance = 1.8f;
     [SerializeField, Min(0.1f)] private float recoverDistance = 2f;
+
+    [Tooltip("Diferencia de altura máxima entre los pivotes.")]
+    [SerializeField, Min(0.1f)]
+    private float maxInteractionHeight = 2f;
+
     [SerializeField, Min(0f)] private float restDuration = 4f;
 
     [Header("Huida")]
@@ -48,8 +55,12 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip screamerClip;
 
+    [Header("Diagnóstico")]
+    [SerializeField] private bool showDebugMessages;
+
     private NavMeshAgent agent;
     private NavMeshPath reusablePath;
+
     private State state = State.Patrol;
 
     private int patrolIndex;
@@ -62,6 +73,11 @@ public class GhostThiefAI : MonoBehaviour
             ? playerSightTarget.position
             : player.position + Vector3.up;
 
+    private bool AgentReady =>
+        agent != null &&
+        agent.isActiveAndEnabled &&
+        agent.isOnNavMesh;
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -69,6 +85,9 @@ public class GhostThiefAI : MonoBehaviour
 
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
     }
 
     private void Start()
@@ -77,69 +96,101 @@ public class GhostThiefAI : MonoBehaviour
             patrolPoints == null || patrolPoints.Length == 0)
         {
             Debug.LogError(
-                "Asigna jugador, ojos, PhoneState y puntos de patrulla.",
+                "GhostThiefAI: asigna Player, Eyes, Phone " +
+                "y al menos un punto de patrulla.",
                 this
             );
+
             enabled = false;
             return;
         }
 
-        if (!agent.isOnNavMesh)
+        if (!AgentReady)
         {
             Debug.LogError(
-                "El Ladrón debe comenzar sobre el NavMesh.",
+                "GhostThiefAI: el enemigo debe comenzar " +
+                "sobre un NavMesh compatible con su agente.",
                 this
             );
+
             enabled = false;
             return;
         }
 
+        // Distancia pequeña para los destinos de patrulla y huida.
+        agent.stoppingDistance = 0.1f;
+
         agent.speed = patrolSpeed;
+        agent.isStopped = false;
+
         GoToNextPatrolPoint();
     }
 
     private void Update()
     {
-        // Actualizamos los parámetros visuales del Animator en cada frame
-        UpdateAnimations();
-
-        if (!agent.isOnNavMesh || Time.time < nextThink)
+        if (!AgentReady)
             return;
 
-        nextThink = Time.time + thinkInterval;
-
-        switch (state)
+        // El robo se comprueba cada frame, antes del temporizador.
+        if (state == State.Chase &&
+            phone.HasPhone &&
+            IsWithinInteractionRange(stealDistance) &&
+            HasClearView())
         {
-            case State.Patrol:
-                UpdatePatrol();
-                break;
-
-            case State.Chase:
-                UpdateChase();
-                break;
-
-            case State.Flee:
-                UpdateFlee();
-                break;
-
-            case State.Rest:
-                if (Time.time >= restUntil)
-                    ReturnToPatrol();
-                break;
+            StealPhone();
+            UpdateAnimations();
+            return;
         }
+
+        // Las búsquedas de rutas siguen limitadas por intervalo.
+        if (Time.time >= nextThink)
+        {
+            nextThink = Time.time + thinkInterval;
+
+            switch (state)
+            {
+                case State.Patrol:
+                    UpdatePatrol();
+                    break;
+
+                case State.Chase:
+                    UpdateChase();
+                    break;
+
+                case State.Flee:
+                    UpdateFlee();
+                    break;
+
+                case State.Rest:
+                    if (Time.time >= restUntil)
+                        ReturnToPatrol();
+                    break;
+            }
+        }
+
+        UpdateAnimations();
     }
 
     private void UpdateAnimations()
     {
-        if (animator == null) return;
+        if (animator == null)
+            return;
 
-        // Se considera corriendo si se desplaza activamente a cierta velocidad en el NavMesh
-        bool isMoving = agent.isOnNavMesh && !agent.isStopped && agent.velocity.sqrMagnitude > 0.05f;
-        animator.SetBool(isRunningParam, isMoving);
+        bool isMoving =
+            AgentReady &&
+            !agent.isStopped &&
+            agent.velocity.sqrMagnitude > 0.05f;
 
-        // Activamos spotPlayer únicamente mientras esté en estado de persecución
-        bool isChasing = (state == State.Chase);
-        animator.SetBool(spotPlayerParam, isChasing);
+        if (!string.IsNullOrEmpty(isRunningParam))
+            animator.SetBool(isRunningParam, isMoving);
+
+        if (!string.IsNullOrEmpty(spotPlayerParam))
+        {
+            animator.SetBool(
+                spotPlayerParam,
+                state == State.Chase
+            );
+        }
     }
 
     private void UpdatePatrol()
@@ -148,7 +199,21 @@ public class GhostThiefAI : MonoBehaviour
         {
             state = State.Chase;
             lastSeenAt = Time.time;
+
             agent.speed = chaseSpeed;
+            agent.isStopped = false;
+
+            if (showDebugMessages)
+                Debug.Log("Ladrón: jugador detectado.", this);
+
+            // Permite robar inmediatamente si ya está cerca.
+            if (IsWithinInteractionRange(stealDistance) &&
+                HasClearView())
+            {
+                StealPhone();
+                return;
+            }
+
             MoveToPlayer();
             return;
         }
@@ -162,31 +227,40 @@ public class GhostThiefAI : MonoBehaviour
 
     private void UpdateChase()
     {
+        // Otro enemigo pudo haber tomado el celular.
         if (!phone.HasPhone)
         {
             ReturnToPatrol();
             return;
         }
 
-        bool seesPlayer = CanSeePlayer();
-
-        if (seesPlayer)
+        if (CanSeePlayer())
         {
             lastSeenAt = Time.time;
-
-            if (Vector3.Distance(transform.position, player.position)
-                <= stealDistance)
-            {
-                StealPhone();
-                return;
-            }
-
             MoveToPlayer();
         }
         else if (Time.time - lastSeenAt >= loseSightDelay)
         {
             ReturnToPatrol();
         }
+
+        // Sin visión, sigue hacia su último destino conocido.
+    }
+
+    private bool IsWithinInteractionRange(float range)
+    {
+        if (player == null)
+            return false;
+
+        Vector3 difference =
+            player.position - transform.position;
+
+        if (Mathf.Abs(difference.y) > maxInteractionHeight)
+            return false;
+
+        difference.y = 0f;
+
+        return difference.sqrMagnitude <= range * range;
     }
 
     private bool CanSeePlayer()
@@ -221,11 +295,18 @@ public class GhostThiefAI : MonoBehaviour
 
     private void MoveToPlayer()
     {
+        // El filtro usa el mismo tipo de agente y sus áreas.
+        NavMeshQueryFilter filter = new NavMeshQueryFilter
+        {
+            agentTypeID = agent.agentTypeID,
+            areaMask = agent.areaMask
+        };
+
         if (NavMesh.SamplePosition(
                 player.position,
                 out NavMeshHit hit,
                 2f,
-                agent.areaMask))
+                filter))
         {
             SetReachableDestination(hit.position);
         }
@@ -235,13 +316,27 @@ public class GhostThiefAI : MonoBehaviour
     {
         if (!phone.TrySteal(this))
         {
+            if (showDebugMessages)
+            {
+                Debug.LogWarning(
+                    "Ladrón: PhoneState rechazó el robo. " +
+                    "Revisa la posesión y la referencia de Phone.",
+                    this
+                );
+            }
+
             ReturnToPatrol();
             return;
         }
 
         state = State.Flee;
-        agent.speed = fleeSpeed;
+
         agent.ResetPath();
+        agent.speed = fleeSpeed;
+        agent.isStopped = false;
+
+        if (showDebugMessages)
+            Debug.Log("Ladrón: celular robado. Inicia huida.", this);
 
         if (audioSource != null && screamerClip != null)
             audioSource.PlayOneShot(screamerClip);
@@ -257,8 +352,12 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
-        if (agent.hasPath && agent.remainingDistance > 1f)
+        if (agent.hasPath &&
+            agent.pathStatus == NavMeshPathStatus.PathComplete &&
+            agent.remainingDistance > 1f)
+        {
             return;
+        }
 
         Vector3 away = transform.position - player.position;
         away.y = 0f;
@@ -267,6 +366,12 @@ public class GhostThiefAI : MonoBehaviour
             away = transform.forward;
 
         away.Normalize();
+
+        NavMeshQueryFilter filter = new NavMeshQueryFilter
+        {
+            agentTypeID = agent.agentTypeID,
+            areaMask = agent.areaMask
+        };
 
         float bestScore = float.NegativeInfinity;
         Vector3 bestPosition = transform.position;
@@ -284,12 +389,12 @@ public class GhostThiefAI : MonoBehaviour
                     candidate,
                     out NavMeshHit hit,
                     1.5f,
-                    agent.areaMask))
+                    filter))
             {
                 continue;
             }
 
-            if (Vector3.Distance(transform.position, hit.position) < 1f)
+            if ((hit.position - transform.position).sqrMagnitude < 1f)
                 continue;
 
             if (!agent.CalculatePath(hit.position, reusablePath) ||
@@ -298,8 +403,11 @@ public class GhostThiefAI : MonoBehaviour
                 continue;
             }
 
-            float score =
-                (hit.position - player.position).sqrMagnitude;
+            Vector3 distanceFromPlayer =
+                hit.position - player.position;
+
+            distanceFromPlayer.y = 0f;
+            float score = distanceFromPlayer.sqrMagnitude;
 
             if (score > bestScore)
             {
@@ -311,10 +419,16 @@ public class GhostThiefAI : MonoBehaviour
 
         if (found)
             SetReachableDestination(bestPosition);
+
+        // Sin salida válida, permanece acorralado y reintenta
+        // en el siguiente intervalo. Se puede recuperar el celular.
     }
 
     private bool SetReachableDestination(Vector3 destination)
     {
+        if (!AgentReady)
+            return false;
+
         if (!agent.CalculatePath(destination, reusablePath) ||
             reusablePath.status != NavMeshPathStatus.PathComplete)
         {
@@ -331,7 +445,8 @@ public class GhostThiefAI : MonoBehaviour
         {
             Transform point = patrolPoints[patrolIndex];
 
-            patrolIndex = (patrolIndex + 1) % patrolPoints.Length;
+            patrolIndex =
+                (patrolIndex + 1) % patrolPoints.Length;
 
             if (point != null &&
                 SetReachableDestination(point.position))
@@ -344,26 +459,30 @@ public class GhostThiefAI : MonoBehaviour
     private void ReturnToPatrol()
     {
         state = State.Patrol;
+
+        agent.ResetPath();
         agent.speed = patrolSpeed;
         agent.isStopped = false;
-        agent.ResetPath();
+
         GoToNextPatrolPoint();
     }
 
     public bool CanRecover()
     {
         return isActiveAndEnabled &&
+               AgentReady &&
+               phone != null &&
+               player != null &&
+               eyes != null &&
                state == State.Flee &&
                phone.CurrentThief == this &&
-               Vector3.Distance(
-                   transform.position,
-                   player.position
-               ) <= recoverDistance &&
+               IsWithinInteractionRange(recoverDistance) &&
                HasClearView();
     }
 
     public void TryRecover()
     {
+        // Valida otra vez al pulsar el botón.
         if (!CanRecover() || !phone.TryRecover(this))
             return;
 
@@ -372,5 +491,39 @@ public class GhostThiefAI : MonoBehaviour
 
         agent.ResetPath();
         agent.isStopped = true;
+
+        UpdateAnimations();
+
+        if (showDebugMessages)
+            Debug.Log("Ladrón: celular recuperado.", this);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, stealDistance);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, recoverDistance);
+
+        if (eyes != null)
+        {
+            Vector3 left =
+                Quaternion.AngleAxis(-visionAngle * 0.5f, Vector3.up)
+                * transform.forward;
+
+            Vector3 right =
+                Quaternion.AngleAxis(visionAngle * 0.5f, Vector3.up)
+                * transform.forward;
+
+            Gizmos.color = Color.yellow;
+
+            Gizmos.DrawRay(eyes.position, left * visionRange);
+            Gizmos.DrawRay(eyes.position, right * visionRange);
+        }
+
+        // Las esferas muestran los radios como ayuda visual.
+        // La interacción real usa distancia horizontal
+        // y el límite de altura configurado.
     }
 }
