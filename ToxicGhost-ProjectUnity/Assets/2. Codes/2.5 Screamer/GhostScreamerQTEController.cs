@@ -10,6 +10,7 @@ public class GhostScreamerQTEController : MonoBehaviour
     public GameObject prefabFantasma;
     public Transform puntoSpawn;
     public Transform jugador;
+    public Transform camaraJugador;
 
     [Header("Interfaz QTE")]
     public GameObject textoReacciona;
@@ -18,7 +19,7 @@ public class GhostScreamerQTEController : MonoBehaviour
 
     [Header("Controles del jugador")]
     public MonoBehaviour controlMovimiento;
-    public MonoBehaviour controlCamara;
+    public CameraLookArea controlCamara;
 
     private bool movimientoEstabaActivo;
     private bool camaraEstabaActiva;
@@ -26,6 +27,7 @@ public class GhostScreamerQTEController : MonoBehaviour
     [Header("Configuracion")]
     public float velocidadFantasma = 1.5f;
     public float distanciaScreamer = 1.5f;
+    public float distanciaAparicion = 4f;
 
     private GameObject fantasmaActual;
     private FantasmaQTE movimientoFantasma;
@@ -48,7 +50,10 @@ public class GhostScreamerQTEController : MonoBehaviour
         if (eventoActivo || mostrandoScreamer)
             return false;
 
-        if (prefabFantasma == null || spawnDeZona == null || jugador == null)
+        if (prefabFantasma == null ||
+            spawnDeZona == null ||
+            jugador == null ||
+            camaraJugador == null)
         {
             Debug.LogWarning("Faltan referencias del Ghost Screamer QTE.");
             return false;
@@ -61,10 +66,27 @@ public class GhostScreamerQTEController : MonoBehaviour
             return false;
         }
 
+        // Obtener la dirección horizontal hacia donde mira el jugador
+        Vector3 direccionFrente = camaraJugador.forward;
+        direccionFrente.y = 0f;
+        direccionFrente.Normalize();
+
+        // Calcular posición frente al jugador
+        Vector3 posicionAparicion =
+            jugador.position + direccionFrente * distanciaAparicion;
+
+        // Mantener la altura definida por el punto de spawn de la zona
+        posicionAparicion.y = spawnDeZona.position.y;
+
+        // Hacer que el fantasma mire hacia el jugador
+        Quaternion rotacionAparicion =
+            Quaternion.LookRotation(-direccionFrente, Vector3.up);
+
+        // Crear fantasma
         fantasmaActual = Instantiate(
             prefabFantasma,
-            spawnDeZona.position,
-            spawnDeZona.rotation
+            posicionAparicion,
+            rotacionAparicion
         );
 
         movimientoFantasma = fantasmaActual.GetComponent<FantasmaQTE>();
