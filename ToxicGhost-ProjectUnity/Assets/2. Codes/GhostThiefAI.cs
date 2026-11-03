@@ -28,9 +28,19 @@ public class GhostThiefAI : MonoBehaviour
     [Tooltip("Solo capas que bloquean la vista. Excluir jugador y enemigo.")]
     [SerializeField] private LayerMask obstacleLayers;
 
-    [SerializeField, Min(0.1f)] private float visionRange = 9f;
-    [SerializeField, Range(1f, 180f)] private float visionAngle = 90f;
-    [SerializeField, Min(0f)] private float loseSightDelay = 1.5f;
+    [SerializeField, Min(0.1f)]
+    private float visionRange = 9f;
+
+    [SerializeField, Range(1f, 180f)]
+    private float visionAngle = 90f;
+
+    [Tooltip("Detecta en cualquier dirección dentro de este radio. " +
+             "Las paredes siguen bloqueando la detección.")]
+    [SerializeField, Min(0f)]
+    private float alertRadius = 4f;
+
+    [SerializeField, Min(0f)]
+    private float loseSightDelay = 1.5f;
 
     [Header("Velocidades")]
     [SerializeField, Min(0f)] private float patrolSpeed = 2f;
@@ -45,7 +55,8 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField, Min(0.1f)]
     private float maxInteractionHeight = 2f;
 
-    [SerializeField, Min(0f)] private float restDuration = 4f;
+    [SerializeField, Min(0f)]
+    private float restDuration = 4f;
 
     [Header("Huida")]
     [SerializeField, Min(1f)] private float fleeStep = 6f;
@@ -117,9 +128,7 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
-        // Distancia pequeña para los destinos de patrulla y huida.
         agent.stoppingDistance = 0.1f;
-
         agent.speed = patrolSpeed;
         agent.isStopped = false;
 
@@ -131,7 +140,7 @@ public class GhostThiefAI : MonoBehaviour
         if (!AgentReady)
             return;
 
-        // El robo se comprueba cada frame, antes del temporizador.
+        // Comprueba el robo cada frame durante la persecución.
         if (state == State.Chase &&
             phone.HasPhone &&
             IsWithinInteractionRange(stealDistance) &&
@@ -142,7 +151,7 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
-        // Las búsquedas de rutas siguen limitadas por intervalo.
+        // Mantiene las búsquedas de ruta limitadas por intervalo.
         if (Time.time >= nextThink)
         {
             nextThink = Time.time + thinkInterval;
@@ -206,7 +215,6 @@ public class GhostThiefAI : MonoBehaviour
             if (showDebugMessages)
                 Debug.Log("Ladrón: jugador detectado.", this);
 
-            // Permite robar inmediatamente si ya está cerca.
             if (IsWithinInteractionRange(stealDistance) &&
                 HasClearView())
             {
@@ -244,7 +252,7 @@ public class GhostThiefAI : MonoBehaviour
             ReturnToPatrol();
         }
 
-        // Sin visión, sigue hacia su último destino conocido.
+        // Sin detección, sigue hacia el último destino conocido.
     }
 
     private bool IsWithinInteractionRange(float range)
@@ -266,21 +274,30 @@ public class GhostThiefAI : MonoBehaviour
     private bool CanSeePlayer()
     {
         Vector3 toPlayer = SightTarget - eyes.position;
+        float distanceSquared = toPlayer.sqrMagnitude;
 
-        if (toPlayer.sqrMagnitude > visionRange * visionRange)
-            return false;
+        // Radio de alerta: detecta también por detrás y a los lados.
+        bool insideAlertRadius =
+            alertRadius > 0f &&
+            distanceSquared <= alertRadius * alertRadius;
 
-        Vector3 horizontal =
-            Vector3.ProjectOnPlane(toPlayer, Vector3.up);
+        // Cono frontal: permite detectar a mayor distancia.
+        bool insideVisionCone = false;
 
-        if (horizontal.sqrMagnitude > 0.001f &&
-            Vector3.Angle(transform.forward, horizontal)
-                > visionAngle * 0.5f)
+        if (distanceSquared <= visionRange * visionRange)
         {
-            return false;
+            Vector3 horizontal =
+                Vector3.ProjectOnPlane(toPlayer, Vector3.up);
+
+            insideVisionCone =
+                horizontal.sqrMagnitude < 0.001f ||
+                Vector3.Angle(transform.forward, horizontal)
+                    <= visionAngle * 0.5f;
         }
 
-        return HasClearView();
+        // Ambos tipos de detección respetan los obstáculos.
+        return (insideAlertRadius || insideVisionCone) &&
+               HasClearView();
     }
 
     private bool HasClearView()
@@ -295,7 +312,6 @@ public class GhostThiefAI : MonoBehaviour
 
     private void MoveToPlayer()
     {
-        // El filtro usa el mismo tipo de agente y sus áreas.
         NavMeshQueryFilter filter = new NavMeshQueryFilter
         {
             agentTypeID = agent.agentTypeID,
@@ -420,8 +436,7 @@ public class GhostThiefAI : MonoBehaviour
         if (found)
             SetReachableDestination(bestPosition);
 
-        // Sin salida válida, permanece acorralado y reintenta
-        // en el siguiente intervalo. Se puede recuperar el celular.
+        // Si no hay salida válida, reintenta en el próximo intervalo.
     }
 
     private bool SetReachableDestination(Vector3 destination)
@@ -482,7 +497,6 @@ public class GhostThiefAI : MonoBehaviour
 
     public void TryRecover()
     {
-        // Valida otra vez al pulsar el botón.
         if (!CanRecover() || !phone.TryRecover(this))
             return;
 
@@ -508,22 +522,25 @@ public class GhostThiefAI : MonoBehaviour
 
         if (eyes != null)
         {
+            // Radio de detección en todas las direcciones.
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(eyes.position, alertRadius);
+
             Vector3 left =
-                Quaternion.AngleAxis(-visionAngle * 0.5f, Vector3.up)
-                * transform.forward;
+                Quaternion.AngleAxis(
+                    -visionAngle * 0.5f,
+                    Vector3.up
+                ) * transform.forward;
 
             Vector3 right =
-                Quaternion.AngleAxis(visionAngle * 0.5f, Vector3.up)
-                * transform.forward;
+                Quaternion.AngleAxis(
+                    visionAngle * 0.5f,
+                    Vector3.up
+                ) * transform.forward;
 
             Gizmos.color = Color.yellow;
-
             Gizmos.DrawRay(eyes.position, left * visionRange);
             Gizmos.DrawRay(eyes.position, right * visionRange);
         }
-
-        // Las esferas muestran los radios como ayuda visual.
-        // La interacción real usa distancia horizontal
-        // y el límite de altura configurado.
     }
 }
