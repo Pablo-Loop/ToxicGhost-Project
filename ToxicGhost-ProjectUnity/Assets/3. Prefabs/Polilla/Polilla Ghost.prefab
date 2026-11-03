@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2843466489200167125}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Eyes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 4881940548598391105}
   - component: {fileID: 4243919723454152328}
   - component: {fileID: 1249853641853822528}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Polilla Ghost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -207,7 +207,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  animator: {fileID: 0}
+  animator: {fileID: 4698010827459863274}
   spotPlayerParam: spotPlayer
   isRunningParam: isRunning
   obstacleLayers:
@@ -219,13 +219,15 @@ MonoBehaviour:
   patrolSpeed: 2
   chaseSpeed: 4
   fleeSpeed: 4.5
-  stealDistance: 1.4
+  stealDistance: 1.8
   recoverDistance: 2
+  maxInteractionHeight: 2
   restDuration: 4
   fleeStep: 6
   thinkInterval: 0.2
   audioSource: {fileID: 0}
   screamerClip: {fileID: 0}
+  showDebugMessages: 0
 --- !u!1001 &1993456496927202865
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -274,9 +276,77 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -283.672
       objectReference: {fileID: 0}
+    - target: {fileID: -6736637989070476333, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -6375662311758219862, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -5747061287529280924, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -5403087156512273238, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -4934905179044546122, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -4370111678170979691, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -1680664150461737158, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -1496600427047910938, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -975436633091727012, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -518473597175232329, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -124231006532731615, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
       propertyPath: m_Name
       value: CriminalGhost
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1193615121389415615, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1862404923158298854, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 3001572431800311152, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4005209584152425075, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4110726989505183553, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 5009616769490255196, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
       propertyPath: m_Size.x
@@ -298,6 +368,14 @@ PrefabInstance:
       propertyPath: m_Center.z
       value: 0.023862785
       objectReference: {fileID: 0}
+    - target: {fileID: 5203763012765309817, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 6641606977235185595, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 6995737949087733177, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
       propertyPath: m_Size.z
       value: 0.06008949
@@ -313,6 +391,14 @@ PrefabInstance:
     - target: {fileID: 6995737949087733177, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
       propertyPath: m_Center.z
       value: 0.024792109
+      objectReference: {fileID: 0}
+    - target: {fileID: 8017690255938395668, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 8323839969012054768, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7866280059732721773, guid: 06f2f94d120b7564c91e3625342b8be0, type: 3}
