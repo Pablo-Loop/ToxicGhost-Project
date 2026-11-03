@@ -1,16 +1,8 @@
 fileFormatVersion: 2
-guid: b5e465c3b17c89f41b33e37470d658b1
+guid: b00d954a1293862478b0aa1815c72b17
 NativeFormatImporter:
   externalObjects: {}
-  mainObjectFileID: 11400000
+  mainObjectFileID: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 154245
-  packageName: Legs Animator
-  packageVersion: 1.0.4.7
-  assetPath: Assets/FImpossible Creations/Plugins - Animating/Legs Animator/Presets
-    Directory/Leg Custom Module Presets/Utility_Parameters_Unglue On - IsMoving.asset
-  uploadId: 1026794

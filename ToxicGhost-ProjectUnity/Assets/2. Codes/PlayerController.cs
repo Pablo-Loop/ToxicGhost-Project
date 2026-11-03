@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private string runParamName = "isRunning";
 
-    [Tooltip("Asigna Main Camera.")]
+    [Tooltip("Asigna la cámara que muestra el juego.")]
     [SerializeField] private Transform movementReference;
 
     [SerializeField] private LayerMask groundLayers;
@@ -40,14 +40,15 @@ public class PlayerController : MonoBehaviour
     private Rigidbody body;
     private Vector2 moveInput;
 
-    private bool movementStarted;
-    private Vector3 lockedForward = Vector3.forward;
+    // Conserva una referencia válida si la cámara apunta
+    // exactamente hacia arriba o abajo.
+    private Vector3 lastValidForward = Vector3.forward;
 
     private float jumpRequestedAt = float.NegativeInfinity;
 
     public bool IsGrounded { get; private set; }
 
-    // Compatibilidad con Unity 6 y Unity 2022.
+    // Compatibilidad con Unity 6 y versiones anteriores.
     private Vector3 Velocity
     {
         get
@@ -93,39 +94,13 @@ public class PlayerController : MonoBehaviour
     {
         ReadInput();
 
-        bool hasInput = moveInput.sqrMagnitude > movementDeadZone * movementDeadZone;
-
-        if (!hasInput)
+        if (moveInput.sqrMagnitude <=
+            movementDeadZone * movementDeadZone)
         {
             moveInput = Vector2.zero;
-            movementStarted = false;
-        }
-        else if (!movementStarted)
-        {
-            CaptureMovementReference();
-            movementStarted = true;
         }
 
         UpdateAnimations();
-    }
-
-    private void UpdateAnimations()
-    {
-        if (animator == null) return;
-
-        // Detecta si hay intención de movimiento activa en el marco actual
-        bool hasInput = moveInput.sqrMagnitude > 0.001f;
-
-        // Está corriendo si hay entrada de control Y el personaje está sobre el suelo
-        bool isRunning = hasInput && IsGrounded;
-
-        // Imprime en consola cuando intentas moverte para diagnosticar
-        if (hasInput)
-        {
-            Debug.Log($"[Animación] Input detectado: {hasInput} | Tocando Suelo (IsGrounded): {IsGrounded} => Envia a Animator: {isRunning}");
-        }
-
-        animator.SetBool(runParamName, isRunning);
     }
 
     private void ReadInput()
@@ -159,43 +134,53 @@ public class PlayerController : MonoBehaviour
                 RequestJump();
         }
 
+        // Evita que las diagonales sean más rápidas.
         moveInput = Vector2.ClampMagnitude(moveInput, 1f);
     }
 
-    private void CaptureMovementReference()
+    private Vector3 GetMovementDirection()
     {
-        lockedForward = Vector3.forward;
+        if (movementReference != null)
+        {
+            // Elimina la inclinación vertical de la cámara:
+            // mirar arriba no hace que el jugador vuele.
+            Vector3 cameraForward = Vector3.ProjectOnPlane(
+                movementReference.forward,
+                Vector3.up
+            );
 
-        if (movementReference == null)
-            return;
+            if (cameraForward.sqrMagnitude > 0.001f)
+                lastValidForward = cameraForward.normalized;
+        }
 
-        Vector3 cameraForward = Vector3.ProjectOnPlane(
-            movementReference.forward,
-            Vector3.up
+        Vector3 right = Vector3.Cross(
+            Vector3.up,
+            lastValidForward
         );
 
-        if (cameraForward.sqrMagnitude > 0.001f)
-            lockedForward = cameraForward.normalized;
+        return
+            lastValidForward * moveInput.y +
+            right * moveInput.x;
     }
 
     private void FixedUpdate()
     {
+
+        body.angularVelocity = Vector3.zero;
+
         Vector3 velocity = Velocity;
 
         IsGrounded = CheckGround() && velocity.y <= 0.1f;
 
-        Vector3 lockedRight =
-            Vector3.Cross(Vector3.up, lockedForward);
-
-        Vector3 direction =
-            lockedForward * moveInput.y +
-            lockedRight * moveInput.x;
+        // Actualiza la dirección con la cámara continuamente.
+        Vector3 direction = GetMovementDirection();
 
         Vector3 horizontalVelocity =
             new Vector3(velocity.x, 0f, velocity.z);
 
         float control = IsGrounded ? 1f : airControl;
 
+        // La aceleración suaviza los cambios de rumbo.
         horizontalVelocity = Vector3.MoveTowards(
             horizontalVelocity,
             direction * moveSpeed,
@@ -220,6 +205,8 @@ public class PlayerController : MonoBehaviour
 
         Velocity = velocity;
 
+        // Sin entrada de movimiento, girar la cámara
+        // no cambia la orientación del personaje.
         if (direction.sqrMagnitude > 0.001f)
         {
             Quaternion targetRotation =
@@ -233,6 +220,20 @@ public class PlayerController : MonoBehaviour
                 )
             );
         }
+    }
+
+    private void UpdateAnimations()
+    {
+        if (animator == null ||
+            string.IsNullOrEmpty(runParamName))
+        {
+            return;
+        }
+
+        bool hasInput = moveInput.sqrMagnitude > 0.001f;
+        bool isRunning = hasInput && IsGrounded;
+
+        animator.SetBool(runParamName, isRunning);
     }
 
     private bool CheckGround()
@@ -265,9 +266,16 @@ public class PlayerController : MonoBehaviour
     private void OnDisable()
     {
         moveInput = Vector2.zero;
-        movementStarted = false;
         jumpRequestedAt = float.NegativeInfinity;
         IsGrounded = false;
+
+        // Evita mantener la animación de carrera
+        // cuando otra mecánica desactiva el controlador.
+        if (animator != null &&
+            !string.IsNullOrEmpty(runParamName))
+        {
+            animator.SetBool(runParamName, false);
+        }
     }
 
     private void OnDrawGizmosSelected()
