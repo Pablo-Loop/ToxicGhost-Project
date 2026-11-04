@@ -212,6 +212,12 @@ public class GhostThiefAI : MonoBehaviour
             agent.speed = chaseSpeed;
             agent.isStopped = false;
 
+            // Reproducir el sonido de avistamiento de Polilla
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.ReproducirPolillaSpot();
+            }
+
             if (showDebugMessages)
                 Debug.Log("Ladrón: jugador detectado.", this);
 

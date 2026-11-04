@@ -227,7 +227,7 @@ MonoBehaviour:
   fleeStep: 6
   thinkInterval: 0.2
   audioSource: {fileID: 0}
-  screamerClip: {fileID: 0}
+  screamerClip: {fileID: 8300000, guid: 2ab320e254bbfb14e859031c26912d00, type: 3}
   showDebugMessages: 0
 --- !u!1001 &1993456496927202865
 PrefabInstance:

@@ -28,7 +28,6 @@ public class UImanager : MonoBehaviour
     private void Start()
     {
         Time.timeScale = 1f;
-        OcultarTodasLasHojas();
 
         if (contenedorHUDGameplay != null)
         {
@@ -90,14 +89,23 @@ public class UImanager : MonoBehaviour
     /// </summary>
     public void CerrarHojaActualYReanudar()
     {
-        OcultarTodasLasHojas();
+        // 1. Reproducir el efecto de sonido de cerrar hoja
+    if (AudioManager.Instance != null && AudioManager.Instance.sfxCerrarHoja != null)
+    {
+        AudioManager.Instance.PlaySFX(AudioManager.Instance.sfxCerrarHoja);
+    }
 
-        if (contenedorHUDGameplay != null)
-        {
-            contenedorHUDGameplay.SetActive(true);
-        }
+    // 2. Ocultar todas las hojas UI
+    OcultarTodasLasHojas();
 
-        Time.timeScale = 1f; // Reanuda el juego
+    // 3. Reactivar el HUD de gameplay
+    if (contenedorHUDGameplay != null)
+    {
+        contenedorHUDGameplay.SetActive(true);
+    }
+
+    // 4. Reanudar la velocidad normal del juego
+    Time.timeScale = 1f;
     }
 
     #endregion

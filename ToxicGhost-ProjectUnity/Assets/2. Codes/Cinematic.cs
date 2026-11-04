@@ -15,20 +15,31 @@ public class Cinematic : MonoBehaviour
     [Tooltip("DESMARCAR en la cinemática inicial para que arranque sola al iniciar el juego.")]
     public bool activarPorTrigger = false;
 
-    [Header("Opciones Post-Cinemática (Opcional)")]
-    [Tooltip("MARCAR en la cinemática inicial para abrir Hoja1 al terminar y pausar el juego.")]
-    public bool mostrarUIPostCinematica = false;
+    [Header("Opciones Post-Cinemática")]
+    [Tooltip("MARCAR en la cinemática inicial para abrir Hoja1 al terminar.")]
+    public bool mostrarUIPostCinematica = true;
 
-    private float duracionCinematica;
     private bool cinematicaEnCurso = false;
 
-    private void Start()
+    private void OnEnable()
     {
         if (Scene != null)
         {
-            duracionCinematica = (float)Scene.duration;
+            // Escuchar el evento oficial de finalización del Timeline
+            Scene.stopped += OnTimelineStopped;
         }
+    }
 
+    private void OnDisable()
+    {
+        if (Scene != null)
+        {
+            Scene.stopped -= OnTimelineStopped;
+        }
+    }
+
+    private void Start()
+    {
         if (!activarPorTrigger)
         {
             IniciarCinematica();
@@ -44,11 +55,11 @@ public class Cinematic : MonoBehaviour
         if (cinematicaEnCurso) return;
 
         cinematicaEnCurso = true;
-        Time.timeScale = 1f; // Garantizar velocidad normal durante la cinemática
+        Time.timeScale = 1f;
 
-        // 1. Activar contenedor de la cinemática y asegurar Gameplay activo para mantener cámaras
+        // 1. Activar cinemática y DESACTIVAR Gameplay para que no estorbe el HUD
         if (SceneObj != null) SceneObj.SetActive(true);
-        if (GameplayObj != null) GameplayObj.SetActive(true);
+        if (GameplayObj != null) GameplayObj.SetActive(false);
 
         // 2. Reproducir Timeline
         if (Scene != null)
@@ -57,48 +68,26 @@ public class Cinematic : MonoBehaviour
             Scene.Evaluate();
             Scene.Play();
         }
-
-        // Respaldo de tiempo por si la duración reportada es 0
-        float tiempoEspera = (duracionCinematica > 0f) ? duracionCinematica : 3f;
-        StartCoroutine(EsperaFinCinematica(tiempoEspera));
     }
 
-    private IEnumerator EsperaFinCinematica(float duracion)
+    // Se dispara automáticamente cuando la barra de tiempo del PlayableDirector llega al final exacto
+    private void OnTimelineStopped(PlayableDirector director)
     {
-        yield return new WaitForSecondsRealtime(duracion);
-        FinalizarCinematica();
+        if (director == Scene && cinematicaEnCurso)
+        {
+            FinalizarCinematica();
+        }
     }
 
     private void FinalizarCinematica()
     {
         cinematicaEnCurso = false;
 
-        // 1. Apagar únicamente el objeto visual de la cinemática
+        // 1. Apagar la cinemática y activar ahora sí el Gameplay
         if (SceneObj != null) SceneObj.SetActive(false);
         if (GameplayObj != null) GameplayObj.SetActive(true);
 
-        // 2. Notificar al UImanager para abrir la Hoja 1 y pausar el juego
-        if (mostrarUIPostCinematica)
-        {
-            if (UImanager.Instance != null)
-            {
-                UImanager.Instance.MostrarHojaUIExclusiva();
-            }
-            else
-            {
-                UImanager manager = FindFirstObjectByType<UImanager>();
-                if (manager != null)
-                {
-                    manager.MostrarHojaUIExclusiva();
-                }
-                else
-                {
-                    Debug.LogError("[Cinematic] No se encontró el componente UImanager en la escena.");
-                }
-            }
-        }
-
-        // 3. Destruir el componente del script al concluir
+       
         Destroy(this);
     }
 

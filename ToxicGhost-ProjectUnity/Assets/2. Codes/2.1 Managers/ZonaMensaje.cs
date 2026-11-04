@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class ZonaMensaje : MonoBehaviour
@@ -25,7 +24,13 @@ public class ZonaMensaje : MonoBehaviour
         {
             zonaActivada = true;
 
-            Debug.Log("Zona de mensaje activada.");
+            // Reproducir el sonido de notificación desde el AudioManager
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.ReproducirNotificacionCelular();
+            }
+
+            Debug.Log("Zona de mensaje activada y notificación reproducida.");
         }
     }
 }
