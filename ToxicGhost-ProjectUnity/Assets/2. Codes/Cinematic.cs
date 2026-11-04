@@ -83,12 +83,35 @@ public class Cinematic : MonoBehaviour
     {
         cinematicaEnCurso = false;
 
-        // 1. Apagar la cinemática y activar ahora sí el Gameplay
+        // 1. Apagar la cinemática y activar el Gameplay
         if (SceneObj != null) SceneObj.SetActive(false);
         if (GameplayObj != null) GameplayObj.SetActive(true);
 
-       
-        Destroy(this);
+        // 2. Mostrar la interfaz si está configurada
+        if (mostrarUIPostCinematica)
+        {
+            if (UImanager.Instance != null)
+            {
+                UImanager.Instance.MostrarHojaUIExclusiva();
+            }
+            else
+            {
+                UImanager manager = FindFirstObjectByType<UImanager>();
+                if (manager != null)
+                {
+                    manager.MostrarHojaUIExclusiva();
+                }
+            }
+        }
+
+        // 3. Guardar el estado del juego en GameManagerMain para persistir el progreso
+        if (GameManagerMain.Instance != null)
+        {
+            GameManagerMain.Instance.GuardarEstadoJuego();
+        }
+
+        // 4. Destruir el GameObject entero de la cinemática/trigger
+        Destroy(gameObject);
     }
 
     private void OnTriggerEnter(Collider other)

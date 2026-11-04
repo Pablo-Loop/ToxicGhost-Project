@@ -190,21 +190,17 @@ public class GhostThiefAI : MonoBehaviour
         if (animator == null)
             return;
 
-        bool isMoving =
-            AgentReady &&
-            !agent.isStopped &&
-            agent.velocity.sqrMagnitude > 0.05f;
+        // RUN se activa tanto persiguiendo (Chase) como huyendo (Flee)
+        bool shouldRun = (state == State.Chase || state == State.Flee);
+
+        // SURPRISE se activa momentáneamente o al entrar en persecución
+        bool isSpotted = (state == State.Chase);
 
         if (!string.IsNullOrEmpty(isRunningParam))
-            animator.SetBool(isRunningParam, isMoving);
+            animator.SetBool(isRunningParam, shouldRun);
 
         if (!string.IsNullOrEmpty(spotPlayerParam))
-        {
-            animator.SetBool(
-                spotPlayerParam,
-                state == State.Chase
-            );
-        }
+            animator.SetBool(spotPlayerParam, isSpotted);
     }
 
     private void UpdatePatrol()
@@ -268,8 +264,7 @@ public class GhostThiefAI : MonoBehaviour
         if (player == null)
             return false;
 
-        Vector3 difference =
-            player.position - transform.position;
+        Vector3 difference = player.position - transform.position;
 
         if (Mathf.Abs(difference.y) > maxInteractionHeight)
             return false;
@@ -292,17 +287,14 @@ public class GhostThiefAI : MonoBehaviour
 
         if (distanceSquared <= visionRange * visionRange)
         {
-            Vector3 horizontal =
-                Vector3.ProjectOnPlane(toPlayer, Vector3.up);
+            Vector3 horizontal = Vector3.ProjectOnPlane(toPlayer, Vector3.up);
 
             insideVisionCone =
                 horizontal.sqrMagnitude < 0.001f ||
-                Vector3.Angle(transform.forward, horizontal)
-                    <= visionAngle * 0.5f;
+                Vector3.Angle(transform.forward, horizontal) <= visionAngle * 0.5f;
         }
 
-        return (insideAlertRadius || insideVisionCone) &&
-               HasClearView();
+        return (insideAlertRadius || insideVisionCone) && HasClearView();
     }
 
     private bool HasClearView()
@@ -350,13 +342,11 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
-        // 1. Quitar vida al jugador
         if (livesSystem != null)
         {
             livesSystem.TakeDamage(1);
         }
 
-        // 2. Ocultar la UI del Teléfono al ser robado
         if (phoneUI != null)
         {
             phoneUI.SetActive(false);
@@ -412,17 +402,10 @@ public class GhostThiefAI : MonoBehaviour
 
         for (int i = 0; i < 8; i++)
         {
-            Vector3 direction =
-                Quaternion.Euler(0f, i * 45f, 0f) * away;
+            Vector3 direction = Quaternion.Euler(0f, i * 45f, 0f) * away;
+            Vector3 candidate = transform.position + direction * fleeStep;
 
-            Vector3 candidate =
-                transform.position + direction * fleeStep;
-
-            if (!NavMesh.SamplePosition(
-                    candidate,
-                    out NavMeshHit hit,
-                    1.5f,
-                    filter))
+            if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 1.5f, filter))
             {
                 continue;
             }
@@ -436,9 +419,7 @@ public class GhostThiefAI : MonoBehaviour
                 continue;
             }
 
-            Vector3 distanceFromPlayer =
-                hit.position - player.position;
-
+            Vector3 distanceFromPlayer = hit.position - player.position;
             distanceFromPlayer.y = 0f;
             float score = distanceFromPlayer.sqrMagnitude;
 
@@ -475,11 +456,9 @@ public class GhostThiefAI : MonoBehaviour
         {
             Transform point = patrolPoints[patrolIndex];
 
-            patrolIndex =
-                (patrolIndex + 1) % patrolPoints.Length;
+            patrolIndex = (patrolIndex + 1) % patrolPoints.Length;
 
-            if (point != null &&
-                SetReachableDestination(point.position))
+            if (point != null && SetReachableDestination(point.position))
             {
                 return;
             }
@@ -515,13 +494,11 @@ public class GhostThiefAI : MonoBehaviour
         if (!CanRecover() || !phone.TryRecover(this))
             return;
 
-        // 1. Restaurar la UI del Teléfono
         if (phoneUI != null)
         {
             phoneUI.SetActive(true);
         }
 
-        // 2. Reproducir sonido de muerte del fantasma
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.ReproducirMuerteFantasma();
@@ -530,7 +507,6 @@ public class GhostThiefAI : MonoBehaviour
         if (showDebugMessages)
             Debug.Log("Ladrón: celular recuperado. El fantasma ha sido eliminado.", this);
 
-        // 3. Destruir el GameObject de este fantasma
         Destroy(gameObject);
     }
 
@@ -547,17 +523,8 @@ public class GhostThiefAI : MonoBehaviour
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(eyes.position, alertRadius);
 
-            Vector3 left =
-                Quaternion.AngleAxis(
-                    -visionAngle * 0.5f,
-                    Vector3.up
-                ) * transform.forward;
-
-            Vector3 right =
-                Quaternion.AngleAxis(
-                    visionAngle * 0.5f,
-                    Vector3.up
-                ) * transform.forward;
+            Vector3 left = Quaternion.AngleAxis(-visionAngle * 0.5f, Vector3.up) * transform.forward;
+            Vector3 right = Quaternion.AngleAxis(visionAngle * 0.5f, Vector3.up) * transform.forward;
 
             Gizmos.color = Color.yellow;
             Gizmos.DrawRay(eyes.position, left * visionRange);

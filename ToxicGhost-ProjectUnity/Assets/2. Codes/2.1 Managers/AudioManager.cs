@@ -15,6 +15,8 @@ public class AudioManager : MonoBehaviour
 
     [Header("Música de Fondo")]
     public AudioClip musicaFondoJuego;
+    public AudioClip bosqueSonido;
+    public AudioClip musicaZonaFinal;
 
     [Header("SFX - Interfaz y Sistema")]
     public AudioClip sfxCerrarHoja;
@@ -52,6 +54,8 @@ public class AudioManager : MonoBehaviour
         if (musicaFondoJuego != null)
         {
             PlayMusica(musicaFondoJuego);
+            PlayMusica(bosqueSonido);
+
         }
     }
 
@@ -79,6 +83,14 @@ public class AudioManager : MonoBehaviour
         musicaSource.clip = clip;
         musicaSource.loop = true;
         musicaSource.Play();
+    }
+
+    public void CambiarAMusicaZonaFinal()
+    {
+        if (musicaZonaFinal != null)
+        {
+            PlayMusica(musicaZonaFinal);
+        }
     }
 
     public void PlaySFX(AudioClip clip)
