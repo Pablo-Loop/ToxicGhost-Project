@@ -20,6 +20,10 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField] private LivesSystem livesSystem;
     [SerializeField] private Transform[] patrolPoints;
 
+    [Header("Interfaz del Teléfono")]
+    [Tooltip("Asigna el GameObject de la UI del Celular que debe ocultarse cuando sea robado.")]
+    [SerializeField] private GameObject phoneUI;
+
     [Header("Animación")]
     [SerializeField] private Animator animator;
     [SerializeField] private string spotPlayerParam = "spotPlayer";
@@ -242,7 +246,6 @@ public class GhostThiefAI : MonoBehaviour
 
     private void UpdateChase()
     {
-        // Otro enemigo pudo haber tomado el celular.
         if (!phone.HasPhone)
         {
             ReturnToPatrol();
@@ -258,8 +261,6 @@ public class GhostThiefAI : MonoBehaviour
         {
             ReturnToPatrol();
         }
-
-        // Sin detección, sigue hacia el último destino conocido.
     }
 
     private bool IsWithinInteractionRange(float range)
@@ -283,12 +284,10 @@ public class GhostThiefAI : MonoBehaviour
         Vector3 toPlayer = SightTarget - eyes.position;
         float distanceSquared = toPlayer.sqrMagnitude;
 
-        // Radio de alerta: detecta también por detrás y a los lados.
         bool insideAlertRadius =
             alertRadius > 0f &&
             distanceSquared <= alertRadius * alertRadius;
 
-        // Cono frontal: permite detectar a mayor distancia.
         bool insideVisionCone = false;
 
         if (distanceSquared <= visionRange * visionRange)
@@ -302,7 +301,6 @@ public class GhostThiefAI : MonoBehaviour
                     <= visionAngle * 0.5f;
         }
 
-        // Ambos tipos de detección respetan los obstáculos.
         return (insideAlertRadius || insideVisionCone) &&
                HasClearView();
     }
@@ -352,9 +350,17 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
+        // 1. Quitar vida al jugador
+        if (livesSystem != null)
+        {
             livesSystem.TakeDamage(1);
-        
-        
+        }
+
+        // 2. Ocultar la UI del Teléfono al ser robado
+        if (phoneUI != null)
+        {
+            phoneUI.SetActive(false);
+        }
 
         state = State.Flee;
 
@@ -446,8 +452,6 @@ public class GhostThiefAI : MonoBehaviour
 
         if (found)
             SetReachableDestination(bestPosition);
-
-        // Si no hay salida válida, reintenta en el próximo intervalo.
     }
 
     private bool SetReachableDestination(Vector3 destination)
@@ -511,7 +515,13 @@ public class GhostThiefAI : MonoBehaviour
         if (!CanRecover() || !phone.TryRecover(this))
             return;
 
-        // 1. Reproducir sonido de muerte del fantasma desde el AudioManager
+        // 1. Restaurar la UI del Teléfono
+        if (phoneUI != null)
+        {
+            phoneUI.SetActive(true);
+        }
+
+        // 2. Reproducir sonido de muerte del fantasma
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.ReproducirMuerteFantasma();
@@ -520,7 +530,7 @@ public class GhostThiefAI : MonoBehaviour
         if (showDebugMessages)
             Debug.Log("Ladrón: celular recuperado. El fantasma ha sido eliminado.", this);
 
-        // 2. Destruir el GameObject de este fantasma
+        // 3. Destruir el GameObject de este fantasma
         Destroy(gameObject);
     }
 
@@ -534,7 +544,6 @@ public class GhostThiefAI : MonoBehaviour
 
         if (eyes != null)
         {
-            // Radio de detección en todas las direcciones.
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(eyes.position, alertRadius);
 

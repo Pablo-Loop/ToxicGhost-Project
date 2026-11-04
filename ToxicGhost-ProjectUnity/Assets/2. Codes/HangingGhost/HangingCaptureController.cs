@@ -66,10 +66,10 @@ public class HangingCaptureController : MonoBehaviour
     private bool[] previousControlStates;
     private bool[] previousHUDStates;
 
-    private RigidbodyConstraints previousConstraints;
+    private RigidbodyConstraints previousConstraints;   
 
     private float progress;
-    private float remainingTime;
+    [SerializeField] private float remainingTime;
     private float resolutionRemaining;
     private bool escaped;
 
