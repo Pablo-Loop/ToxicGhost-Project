@@ -20,6 +20,7 @@ public class AudioManager : MonoBehaviour
     [Header("SFX - Jugador (Gasp)")]
     public AudioClip sfxPerderVida;
     public AudioClip sfxPickUpVida;
+    public AudioClip sfxHintSound;
 
     [Header("SFX - Enemigos (Fantasmas)")]
     public AudioClip sfxMuerteFantasma;
@@ -94,6 +95,11 @@ public class AudioManager : MonoBehaviour
     public void ReproducirPolillaSpot()
     {
         PlaySFX(PolillaSpot); 
+    }
+
+    public void ReproducirHintSound()
+    {
+        PlaySFX(sfxHintSound);
     }
 
     #endregion

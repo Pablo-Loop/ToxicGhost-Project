@@ -28,8 +28,6 @@ public class Clue : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         bool interactPressed = (keyboard != null && keyboard.eKey.wasPressedThisFrame);
 
-        // Si quieres enlazarlo después a un botón en pantalla de móviles, puedes activar una bandera pública o evento aquí.
-
         if (playerIsNearby && !isShowingClue && interactPressed)
         {
             ClueActivate();
@@ -55,6 +53,13 @@ public class Clue : MonoBehaviour
 
     private void ClueActivate()
     {
+        // 1. Reproducir el efecto de sonido de la pista
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.ReproducirHintSound();
+        }
+
+        // 2. Destruir obstáculo y mostrar la pista visual
         Destroy(unlockingTree);
         StartCoroutine(ShowClueRoutine());
     }
@@ -68,7 +73,6 @@ public class Clue : MonoBehaviour
         yield return new WaitForSeconds(displayDuration);
 
         visualClue.SetActive(false);
-
 
         isShowingClue = false;
     }

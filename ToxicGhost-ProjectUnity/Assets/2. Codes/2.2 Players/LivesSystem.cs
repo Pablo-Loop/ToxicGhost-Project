@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -21,6 +20,9 @@ public class LivesSystem : MonoBehaviour
 
     private bool isDead = false;
 
+    public int CurrentHealth => currentHealth;
+    public int MaxHealth => maxHealth;
+
     private void Start()
     {
         currentHealth = maxHealth;
@@ -38,6 +40,12 @@ public class LivesSystem : MonoBehaviour
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
+        // Reproducir sonido de daño
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.ReproducirPerderVida();
+        }
+
         UpdateHealthUI();
 
         if (currentHealth <= 0)
@@ -46,17 +54,35 @@ public class LivesSystem : MonoBehaviour
         }
     }
 
+    public bool Heal(int amount)
+    {
+        // Si ya está muerto o la vida está al máximo, no consume el pickup
+        if (isDead || currentHealth >= maxHealth) return false;
+
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        // Reproducir sonido de recuperación de vida
+        if (AudioManager.Instance != null && AudioManager.Instance.sfxPickUpVida != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.sfxPickUpVida);
+        }
+
+        UpdateHealthUI();
+        return true;
+    }
+
     private void UpdateHealthUI()
     {
-        // Mantener el texto original
         if (healthText != null)
         {
             healthText.text = currentHealth.ToString();
         }
 
-        // Actualizar imagen de Gasp
         if (imagenVidas != null)
         {
+            imagenVidas.enabled = true;
+
             if (currentHealth >= 3)
             {
                 imagenVidas.sprite = spriteTresVidas;
@@ -97,4 +123,3 @@ public class LivesSystem : MonoBehaviour
         );
     }
 }
-

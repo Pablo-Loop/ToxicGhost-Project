@@ -2,15 +2,25 @@ using UnityEngine;
 
 public class LivePickUp : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Header("Configuración de Curación")]
+    [SerializeField] private int healAmount = 1;
+    [SerializeField] private LivesSystem livesSystem;
 
-    // Update is called once per frame
-    void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        
+        if (other.CompareTag("Player"))
+        {
+
+            if (livesSystem != null)
+            {
+                // Intentar curar. Si fue exitoso (no tenía vida máxima), destruye el objeto.
+                bool healed = livesSystem.Heal(healAmount);
+
+                if (healed)
+                {
+                    Destroy(gameObject);
+                }
+            }
+        }
     }
 }
