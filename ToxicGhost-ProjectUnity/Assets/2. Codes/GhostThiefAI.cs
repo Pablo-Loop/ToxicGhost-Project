@@ -17,6 +17,7 @@ public class GhostThiefAI : MonoBehaviour
     [SerializeField] private Transform playerSightTarget;
     [SerializeField] private Transform eyes;
     [SerializeField] private PhoneState phone;
+    [SerializeField] private LivesSystem livesSystem;
     [SerializeField] private Transform[] patrolPoints;
 
     [Header("Animación")]
@@ -351,6 +352,10 @@ public class GhostThiefAI : MonoBehaviour
             return;
         }
 
+            livesSystem.TakeDamage(1);
+        
+        
+
         state = State.Flee;
 
         agent.ResetPath();
@@ -506,16 +511,17 @@ public class GhostThiefAI : MonoBehaviour
         if (!CanRecover() || !phone.TryRecover(this))
             return;
 
-        state = State.Rest;
-        restUntil = Time.time + restDuration;
-
-        agent.ResetPath();
-        agent.isStopped = true;
-
-        UpdateAnimations();
+        // 1. Reproducir sonido de muerte del fantasma desde el AudioManager
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.ReproducirMuerteFantasma();
+        }
 
         if (showDebugMessages)
-            Debug.Log("Ladrón: celular recuperado.", this);
+            Debug.Log("Ladrón: celular recuperado. El fantasma ha sido eliminado.", this);
+
+        // 2. Destruir el GameObject de este fantasma
+        Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()

@@ -223,13 +223,13 @@ MonoBehaviour:
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 136
-  visionRange: 12
-  visionAngle: 120
-  alertRadius: 2
+  visionRange: 30
+  visionAngle: 180
+  alertRadius: 30
   detectionInterval: 0.15
   patrolSpeed: 4
   throwDuration: 0.5
-  attackCooldown: 5
+  attackCooldown: 3
   onThrow:
     m_PersistentCalls:
       m_Calls: []

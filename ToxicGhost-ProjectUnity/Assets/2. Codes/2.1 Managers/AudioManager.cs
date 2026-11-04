@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
@@ -8,6 +9,10 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource musicaSource;
     [SerializeField] private AudioSource sfxSource;
 
+    [Header("Asignación de Audio Mixer")]
+    [SerializeField] private AudioMixerGroup musicaMixerGroup;
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+
     [Header("Música de Fondo")]
     public AudioClip musicaFondoJuego;
 
@@ -15,7 +20,7 @@ public class AudioManager : MonoBehaviour
     public AudioClip sfxCerrarHoja;
 
     [Header("SFX - Celular y Mensajes")]
-    public AudioClip sfxNotificacionCelular; // Tono de mensaje/chat de Maya
+    public AudioClip sfxNotificacionCelular;
 
     [Header("SFX - Jugador (Gasp)")]
     public AudioClip sfxPerderVida;
@@ -34,6 +39,7 @@ public class AudioManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            VincularAudioSourcesAMixer();
         }
         else
         {
@@ -46,6 +52,22 @@ public class AudioManager : MonoBehaviour
         if (musicaFondoJuego != null)
         {
             PlayMusica(musicaFondoJuego);
+        }
+    }
+
+    /// <summary>
+    /// Conecta la salida de los AudioSource con las pistas correspondientes del AudioMixer.
+    /// </summary>
+    private void VincularAudioSourcesAMixer()
+    {
+        if (musicaSource != null && musicaMixerGroup != null)
+        {
+            musicaSource.outputAudioMixerGroup = musicaMixerGroup;
+        }
+
+        if (sfxSource != null && sfxMixerGroup != null)
+        {
+            sfxSource.outputAudioMixerGroup = sfxMixerGroup;
         }
     }
 
@@ -67,40 +89,13 @@ public class AudioManager : MonoBehaviour
 
     // --- Métodos de disparo rápido ---
 
-    public void ReproducirNotificacionCelular()
-    {
-        PlaySFX(sfxNotificacionCelular);
-    }
-
-    public void ReproducirPerderVida()
-    {
-        PlaySFX(sfxPerderVida);
-    }
-
-    public void ReproducirMuerteFantasma()
-    {
-        PlaySFX(sfxMuerteFantasma);
-    }
-
-    public void ReproducirAtaqueFantasma()
-    {
-        PlaySFX(sfxAtaqueFantasma);
-    }
-
-    public void ReproducirScreamer()
-    {
-        PlaySFX(sfxScreamer);
-    }
-
-    public void ReproducirPolillaSpot()
-    {
-        PlaySFX(PolillaSpot); 
-    }
-
-    public void ReproducirHintSound()
-    {
-        PlaySFX(sfxHintSound);
-    }
+    public void ReproducirNotificacionCelular() => PlaySFX(sfxNotificacionCelular);
+    public void ReproducirPerderVida() => PlaySFX(sfxPerderVida);
+    public void ReproducirMuerteFantasma() => PlaySFX(sfxMuerteFantasma);
+    public void ReproducirAtaqueFantasma() => PlaySFX(sfxAtaqueFantasma);
+    public void ReproducirScreamer() => PlaySFX(sfxScreamer);
+    public void ReproducirPolillaSpot() => PlaySFX(PolillaSpot);
+    public void ReproducirHintSound() => PlaySFX(sfxHintSound);
 
     #endregion
 }

@@ -139,7 +139,7 @@ GameObject:
   - component: {fileID: 571280613280971172}
   - component: {fileID: 6409090880338236961}
   - component: {fileID: 4011503667678201598}
-  - component: {fileID: 1873006202599140501}
+  - component: {fileID: 5275234701082870869}
   m_Layer: 0
   m_Name: LifePickUp
   m_TagString: Untagged
@@ -155,7 +155,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6939084584971412193}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2.6189575, y: 1.8146505, z: 1.3584595}
   m_LocalScale: {x: 0.87889, y: 0.87889, z: 0.87889}
   m_ConstrainProportionsScale: 1
@@ -242,28 +242,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.8690796, y: 2.4412174, z: 1.848938}
   m_Center: {x: -0.08224487, y: 0.16108513, z: -0.022613525}
---- !u!95 &1873006202599140501
-Animator:
-  serializedVersion: 7
+--- !u!114 &5275234701082870869
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6939084584971412193}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: bfc41deeed3893d4fad21860ec71c19b, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b556a20cc0721b42b91e50fe2e3b038, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LivePickUp
+  healAmount: 1
+  livesSystem: {fileID: 0}
 --- !u!1 &7576181563037314611
 GameObject:
   m_ObjectHideFlags: 0

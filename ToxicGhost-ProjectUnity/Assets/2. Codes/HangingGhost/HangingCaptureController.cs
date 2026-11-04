@@ -21,6 +21,7 @@ public class HangingCaptureController : MonoBehaviour
 
     [Tooltip("Otros scripts que permiten abrir inventario, teléfono o habilidades.")]
     [SerializeField] private MonoBehaviour[] additionalControls;
+    [SerializeField] private LivesSystem livesSystem;
 
     [Header("Interfaz habitual")]
     [Tooltip("No incluir la salud, el panel QTE ni sus objetos padres.")]
@@ -44,7 +45,7 @@ public class HangingCaptureController : MonoBehaviour
     private float progressDecayPerSecond = 0.08f;
 
     [SerializeField, Min(0f)]
-    private float failureDamage = 40f;
+    private float failureDamage = 1f; // Daño configurado por defecto a 1 vida
 
     [Tooltip("Tiempo reservado para la animación de resolución.")]
     [SerializeField, Min(0f)]
@@ -56,8 +57,7 @@ public class HangingCaptureController : MonoBehaviour
     public UnityEvent onFailed = new UnityEvent();
 
     [Header("Conexión con la salud")]
-    public UnityEvent<float> onFailureDamage =
-        new UnityEvent<float>();
+    public UnityEvent<float> onFailureDamage = new UnityEvent<float>();
 
     private CaptureState state = CaptureState.Idle;
     private Component owner;
@@ -90,9 +90,7 @@ public class HangingCaptureController : MonoBehaviour
 
     private void BuildControlList()
     {
-        // Evita registrar dos veces el mismo componente.
-        var controls =
-            new System.Collections.Generic.List<Behaviour>();
+        var controls = new System.Collections.Generic.List<Behaviour>();
 
         AddControl(controls, playerController);
         AddControl(controls, cameraFollow);
@@ -143,8 +141,6 @@ public class HangingCaptureController : MonoBehaviour
         if (!ValidateReferences())
             return false;
 
-        // No interfiere con un jugador ya inmovilizado
-        // completamente por otro sistema.
         if (playerBody.isKinematic ||
             playerBody.constraints == RigidbodyConstraints.FreezeAll ||
             !playerController.isActiveAndEnabled)
@@ -202,7 +198,6 @@ public class HangingCaptureController : MonoBehaviour
             return false;
         }
 
-        // El panel no puede desactivar al controlador.
         if (transform.IsChildOf(capturePanel.transform))
         {
             Debug.LogError(
@@ -230,8 +225,6 @@ public class HangingCaptureController : MonoBehaviour
                 if (hud == null)
                     continue;
 
-                // Impide ocultar accidentalmente el controlador,
-                // el jugador, la cámara o la interfaz del QTE.
                 if (transform.IsChildOf(hud.transform) ||
                     playerBody.transform.IsChildOf(hud.transform) ||
                     cameraFollow.transform.IsChildOf(hud.transform) ||
@@ -254,40 +247,31 @@ public class HangingCaptureController : MonoBehaviour
 
     private void SaveAndLockState()
     {
-        previousControlStates =
-            new bool[controlsToDisable.Length];
+        previousControlStates = new bool[controlsToDisable.Length];
 
         for (int i = 0; i < controlsToDisable.Length; i++)
         {
             Behaviour control = controlsToDisable[i];
-
             previousControlStates[i] = control.enabled;
             control.enabled = false;
         }
 
         previousConstraints = playerBody.constraints;
 
-        // Detiene la inercia antes de inmovilizar.
         playerBody.linearVelocity = Vector3.zero;
         playerBody.angularVelocity = Vector3.zero;
 
-        playerBody.constraints =
-            RigidbodyConstraints.FreezeAll;
+        playerBody.constraints = RigidbodyConstraints.FreezeAll;
 
-        int hudCount = hudToHide != null
-            ? hudToHide.Length
-            : 0;
-
+        int hudCount = hudToHide != null ? hudToHide.Length : 0;
         previousHUDStates = new bool[hudCount];
 
-        // Primero guarda todos los estados.
         for (int i = 0; i < hudCount; i++)
         {
             if (hudToHide[i] != null)
                 previousHUDStates[i] = hudToHide[i].activeSelf;
         }
 
-        // Después oculta los objetos.
         for (int i = 0; i < hudCount; i++)
         {
             if (hudToHide[i] != null)
@@ -297,21 +281,16 @@ public class HangingCaptureController : MonoBehaviour
 
     private void Update()
     {
-        // El QTE se pausa junto con el juego.
         if (Time.timeScale <= 0f)
             return;
 
         if (state == CaptureState.Playing)
         {
-            remainingTime = Mathf.Max(
-                0f,
-                remainingTime - Time.deltaTime
-            );
+            remainingTime = Mathf.Max(0f, remainingTime - Time.deltaTime);
 
             progress = Mathf.Max(
                 0f,
-                progress -
-                progressDecayPerSecond * Time.deltaTime
+                progress - progressDecayPerSecond * Time.deltaTime
             );
 
             RefreshBars();
@@ -337,10 +316,7 @@ public class HangingCaptureController : MonoBehaviour
             return;
         }
 
-        progress = Mathf.Clamp01(
-            progress + progressPerTap
-        );
-
+        progress = Mathf.Clamp01(progress + progressPerTap);
         RefreshBars();
 
         if (progress >= 1f)
@@ -358,23 +334,40 @@ public class HangingCaptureController : MonoBehaviour
 
         capturePanel.SetActive(false);
 
-        // Conserva el bloqueo mientras termina la animación.
         if (success)
+        {
+            // 1. Reproducir sonido de muerte del fantasma
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.ReproducirMuerteFantasma();
+            }
+
+            // 2. Destruir el GameObject del fantasma que atrapó al jugador
+            if (owner != null)
+            {
+                Destroy(owner.gameObject);
+            }
+
             onEscaped.Invoke();
+        }
         else
+        {
             onFailed.Invoke();
+        }
     }
 
     private void FinishResolution()
     {
         bool applyDamage = !escaped;
 
-        // Restaura primero. Después, el sistema de salud puede
-        // gestionar la derrota y aplicar sus propios bloqueos.
         RestoreState();
 
         if (applyDamage)
-            onFailureDamage.Invoke(failureDamage);
+        {
+           
+            livesSystem.TakeDamage(1);
+         
+        }
     }
 
     private void RefreshBars()
@@ -383,16 +376,13 @@ public class HangingCaptureController : MonoBehaviour
 
         if (timeSlider != null)
         {
-            timeSlider.value = Mathf.Clamp01(
-                remainingTime / timeLimit
-            );
+            timeSlider.value = Mathf.Clamp01(remainingTime / timeLimit);
         }
     }
 
     private void PlaceButton()
     {
-        RectTransform buttonRect =
-            (RectTransform)escapeButton.transform;
+        RectTransform buttonRect = (RectTransform)escapeButton.transform;
 
         buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
         buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -408,17 +398,11 @@ public class HangingCaptureController : MonoBehaviour
         float maxY = area.yMax - halfSize.y;
 
         Vector2 position = new Vector2(
-            minX <= maxX
-                ? Random.Range(minX, maxX)
-                : area.center.x,
-
-            minY <= maxY
-                ? Random.Range(minY, maxY)
-                : area.center.y
+            minX <= maxX ? Random.Range(minX, maxX) : area.center.x,
+            minY <= maxY ? Random.Range(minY, maxY) : area.center.y
         );
 
-        buttonRect.anchoredPosition =
-            position - area.center;
+        buttonRect.anchoredPosition = position - area.center;
     }
 
     private void RestoreState()
@@ -431,23 +415,19 @@ public class HangingCaptureController : MonoBehaviour
                 playerBody.angularVelocity = Vector3.zero;
             }
 
-            // Recupera exactamente las restricciones anteriores.
             playerBody.constraints = previousConstraints;
         }
 
         if (previousHUDStates != null && hudToHide != null)
         {
-            for (int i = 0;
-                 i < previousHUDStates.Length && i < hudToHide.Length;
-                 i++)
+            for (int i = 0; i < previousHUDStates.Length && i < hudToHide.Length; i++)
             {
                 if (hudToHide[i] != null)
                     hudToHide[i].SetActive(previousHUDStates[i]);
             }
         }
 
-        if (previousControlStates != null &&
-            controlsToDisable != null)
+        if (previousControlStates != null && controlsToDisable != null)
         {
             for (int i = 0; i < controlsToDisable.Length; i++)
             {

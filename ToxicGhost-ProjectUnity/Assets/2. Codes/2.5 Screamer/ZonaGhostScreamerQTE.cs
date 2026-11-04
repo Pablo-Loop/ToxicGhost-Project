@@ -28,6 +28,8 @@ public class ZonaGhostScreamerQTE : MonoBehaviour
             return;
         }
 
+        
+
         // Solo registrar la zona como utilizada
         // si el GameManager inició el evento.
         bool eventoIniciado = controlador.IniciarEvento(puntoSpawn);

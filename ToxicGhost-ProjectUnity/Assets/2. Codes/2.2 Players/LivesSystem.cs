@@ -116,10 +116,23 @@ public class LivesSystem : MonoBehaviour
 
     public void RestartGame()
     {
+        // 1. Reanudar el tiempo del juego
         Time.timeScale = 1f;
+        isDead = false;
 
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
-        );
+        // 2. Restaurar la vida completa de Gasp
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+
+        // 3. Ocultar el Canvas de Game Over
+        if (gameOverCanvas != null)
+        {
+            gameOverCanvas.SetActive(false);
+        }
+
+        if (GameManagerMain.Instance != null)
+        {
+            GameManagerMain.Instance.RespawnEnUltimoCheckpoint();
+        }
     }
 }

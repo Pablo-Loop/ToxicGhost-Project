@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class MainGameManager : MonoBehaviour
+public class GameManagerMain : MonoBehaviour
 {
-    public static MainGameManager Instance { get; private set; }
+    public static GameManagerMain Instance { get; private set; }
 
     [Header("Referencias Principales")]
     [Tooltip("Asigna únicamente el Transform del Jugador (Gasp).")]
     [SerializeField] private Transform jugadorTransform;
 
-    // Listas internas que se llenarán automáticamente por Tags
     private List<NavMeshAgent> fantasmasEnEscena = new List<NavMeshAgent>();
     private List<GameObject> objetosGuardables = new List<GameObject>();
 
@@ -37,29 +36,22 @@ public class MainGameManager : MonoBehaviour
         CargarEstadoJuego();
     }
 
-    /// <summary>
-    /// Escanea la escena y registra automáticamente todos los objetos marcados con Tags.
-    /// </summary>
     private void InicializarReferenciasPorTags()
     {
-        // 1. Buscar automáticamente todos los objetos con Tag "Saveable"
         GameObject[] encontrados = GameObject.FindGameObjectsWithTag("Saveable");
         objetosGuardables.Clear();
 
         foreach (GameObject obj in encontrados)
         {
-            // Ignorar el objeto "Escena" o cualquier objeto con el script Cinematic para evitar que el guardado apague la animación inicial
             if (obj.name != "Escena" && obj.GetComponent<Cinematic>() == null)
             {
                 objetosGuardables.Add(obj);
             }
         }
 
-        // 2. Buscar automáticamente todos los fantasmas (usamos tag "Ghost" o "Enemy" en lugar de confundirlo con "Player")
-        GameObject[] fantasmasObj = GameObject.FindGameObjectsWithTag("Ghost");
+        GameObject[] fantasmasObj = GameObject.FindGameObjectsWithTag("Player");
         if (fantasmasObj.Length == 0)
         {
-            // Respaldo por si tus fantasmas usan otro tag en la escena
             fantasmasObj = GameObject.FindGameObjectsWithTag("Player");
         }
 
@@ -67,7 +59,6 @@ public class MainGameManager : MonoBehaviour
 
         foreach (GameObject g in fantasmasObj)
         {
-            // Aseguramos no incluir al jugador real
             if (g.transform != jugadorTransform)
             {
                 NavMeshAgent agent = g.GetComponent<NavMeshAgent>();
@@ -77,9 +68,46 @@ public class MainGameManager : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log($"Referencias inicializadas: {objetosGuardables.Count} objetos guardables y {fantasmasEnEscena.Count} fantasmas detectados.");
     }
+
+    #region Sistema de Checkpoints y Respawn
+
+    /// <summary>
+    /// Se llama automáticamente cuando Gasp cruza el trigger de un Checkpoint.
+    /// </summary>
+    public void RegistrarCheckpoint(Vector3 posicionCheckpoint)
+    {
+        datosActuales.posicionJugador = new PosicionData(posicionCheckpoint);
+        GuardarEstadoJuego();
+        Debug.Log($"Checkpoint guardado en la posición: {posicionCheckpoint}");
+    }
+
+    /// <summary>
+    /// Reposiciona a Gasp en el último checkpoint sin reiniciar la escena.
+    /// </summary>
+    public void RespawnEnUltimoCheckpoint()
+    {
+        if (jugadorTransform == null) return;
+
+        // Si tenemos guardada una posición previa de Checkpoint
+        if (datosActuales.posicionJugador != null)
+        {
+            Vector3 targetPos = datosActuales.posicionJugador.ToVector3();
+            targetPos.y += 0.1f; // Holgura para evitar colisionar con el piso
+
+            // Desactivar temporalmente CharacterController o Rigidbody para poder mover a Gasp
+            CharacterController cc = jugadorTransform.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+
+            jugadorTransform.position = targetPos;
+
+            if (cc != null) cc.enabled = true;
+        }
+
+        Debug.Log("Gasp ha reaparecido en el último checkpoint guardado.");
+    }
+
+    #endregion
 
     #region Guardado y Cargado
 
@@ -88,7 +116,10 @@ public class MainGameManager : MonoBehaviour
         if (jugadorTransform == null) return;
 
         // 1. Guardar Jugador
-        datosActuales.posicionJugador = new PosicionData(jugadorTransform.position);
+        if (datosActuales.posicionJugador == null)
+        {
+            datosActuales.posicionJugador = new PosicionData(jugadorTransform.position);
+        }
 
         // 2. Guardar Fantasmas (NavMesh)
         datosActuales.listaFantasmas.Clear();
@@ -106,7 +137,7 @@ public class MainGameManager : MonoBehaviour
             }
         }
 
-        // 3. Guardar Objetos del Escenario (Triggers, Pistas, Coleccionables)
+        // 3. Guardar Objetos del Escenario
         datosActuales.listaObjetosEscenario.Clear();
         for (int i = 0; i < objetosGuardables.Count; i++)
         {
@@ -121,12 +152,10 @@ public class MainGameManager : MonoBehaviour
             }
         }
 
-        // 4. Convertir a JSON y guardar en PlayerPrefs
+        // 4. Guardar JSON en PlayerPrefs
         string json = JsonUtility.ToJson(datosActuales);
         PlayerPrefs.SetString(SAVE_KEY, json);
         PlayerPrefs.Save();
-
-        Debug.Log("Juego guardado automáticamente mediante Tags.");
     }
 
     public void CargarEstadoJuego()
@@ -137,20 +166,9 @@ public class MainGameManager : MonoBehaviour
         datosActuales = JsonUtility.FromJson<GameData>(json);
 
         // 1. Restaurar Posición del Jugador
-        if (jugadorTransform != null && datosActuales.posicionJugador != null)
-        {
-            Vector3 targetPos = datosActuales.posicionJugador.ToVector3();
-            targetPos.y += 0.1f; // Holgura para evitar colisiones con el suelo
+        RespawnEnUltimoCheckpoint();
 
-            CharacterController cc = jugadorTransform.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false;
-
-            jugadorTransform.position = targetPos;
-
-            if (cc != null) cc.enabled = true;
-        }
-
-        // 2. Restaurar Fantasmas usando NavMeshAgent.Warp()
+        // 2. Restaurar Fantasmas
         for (int i = 0; i < fantasmasEnEscena.Count; i++)
         {
             if (fantasmasEnEscena[i] != null && i < datosActuales.listaFantasmas.Count)
@@ -165,7 +183,7 @@ public class MainGameManager : MonoBehaviour
             }
         }
 
-        // 3. Restaurar Estado de Objetos del Escenario
+        // 3. Restaurar Objetos del Escenario
         for (int i = 0; i < objetosGuardables.Count; i++)
         {
             if (objetosGuardables[i] != null)
@@ -177,21 +195,9 @@ public class MainGameManager : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log("Estado del juego cargado correctamente mediante Tags.");
-    }
-
-    [ContextMenu("Borrar Datos Guardados (Reset)")]
-    public void BorrarDatosGuardados()
-    {
-        PlayerPrefs.DeleteKey(SAVE_KEY);
-        PlayerPrefs.Save();
-        Debug.Log("Partida eliminada.");
     }
 
     #endregion
-
-    #region Ciclo de Vida Móvil (Android)
 
     private void OnApplicationQuit()
     {
@@ -205,6 +211,4 @@ public class MainGameManager : MonoBehaviour
             GuardarEstadoJuego();
         }
     }
-
-    #endregion
 }

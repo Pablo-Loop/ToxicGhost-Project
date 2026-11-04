@@ -11,6 +11,8 @@ public class GhostScreamerQTEController : MonoBehaviour
     public Transform puntoSpawn;
     public Transform jugador;
     public Transform camaraJugador;
+    [SerializeField] private LivesSystem livesSystem;
+
 
     [Header("Interfaz QTE")]
     public GameObject textoReacciona;
@@ -228,7 +230,8 @@ public class GhostScreamerQTEController : MonoBehaviour
     }
 
     IEnumerator MostrarScreamer()
-    {
+    {        
+
         if (imagenScreamer != null)
             imagenScreamer.SetActive(true);
 
@@ -243,6 +246,8 @@ public class GhostScreamerQTEController : MonoBehaviour
         mostrandoScreamer = false;
 
         RestaurarControles();
+        
+        livesSystem.TakeDamage(1);
 
         Debug.Log("Screamer finalizado. Controles restaurados.");
     }

@@ -7,6 +7,7 @@ public class Clue : MonoBehaviour
     [Header("REFERENCIAS")]
     [SerializeField] private GameObject visualClue;
     [SerializeField] private GameObject unlockingTree;
+    [SerializeField] private GameObject UIinteract;
 
     [Header("CONFIGURACIÓN")]
     [SerializeField] private float displayDuration = 10f;
@@ -18,7 +19,9 @@ public class Clue : MonoBehaviour
     {
         if (visualClue != null)
         {
-            visualClue.SetActive(false);
+            visualClue.SetActive(false); 
+            UIinteract.SetActive(false);
+
         }
     }
 
@@ -39,7 +42,7 @@ public class Clue : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerIsNearby = true;
-            Debug.Log("Jugador cerca de la pista. ¡Presiona 'E' (o interactúa) para ver la pista!");
+            UIinteract.SetActive(true);
         }
     }
 
@@ -48,10 +51,12 @@ public class Clue : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerIsNearby = false;
+            UIinteract.SetActive(false);
+
         }
     }
 
-    private void ClueActivate()
+    public void ClueActivate()
     {
         // 1. Reproducir el efecto de sonido de la pista
         if (AudioManager.Instance != null)
