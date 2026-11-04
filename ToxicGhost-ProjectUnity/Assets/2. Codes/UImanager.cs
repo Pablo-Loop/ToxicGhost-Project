@@ -1,48 +1,104 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UImanager : MonoBehaviour
 {
     public static UImanager Instance { get; private set; }
 
-    [Header("Referencias de Interfaz")]
-    [Tooltip("La hoja informativa que se muestra al terminar la cinemática (contiene la 'X').")]
-    [SerializeField] private GameObject panelHojaUI;
+    [Header("Colección de Hojas Informativas")]
+    [Tooltip("Agrega las Hojas UI en orden: Element 0 = Hoja1, Element 1 = Hoja2, Element 2 = Hoja3, etc.")]
+    [SerializeField] private List<GameObject> listaHojasUI = new List<GameObject>();
 
-    [Tooltip("Objeto padre que contiene todas las demás UIs del juego (Joystick, vida, etc.).")]
+    [Header("HUD del Juego")]
+    [Tooltip("Objeto padre que contiene las UIs del gameplay (Joystick, vida, celular, etc.).")]
     [SerializeField] private GameObject contenedorHUDGameplay;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Start()
     {
-        // 1. Asegurar tiempo normal al iniciar la escena para que la cinemática se reproduzca sin trabarse
         Time.timeScale = 1f;
+        OcultarTodasLasHojas();
 
-        // 2. Ocultar la Hoja1 y el HUD mientras transcurre la cinemática inicial
-        if (panelHojaUI != null) panelHojaUI.SetActive(false);
-        if (contenedorHUDGameplay != null) contenedorHUDGameplay.SetActive(false);
+        if (contenedorHUDGameplay != null)
+        {
+            contenedorHUDGameplay.SetActive(false);
+        }
     }
 
+    private void OcultarTodasLasHojas()
+    {
+        foreach (GameObject hoja in listaHojasUI)
+        {
+            if (hoja != null) hoja.SetActive(false);
+        }
+    }
+
+    #region Hoja 1 (Post-Cinemática Inicial)
+
     /// <summary>
-    /// Se llama automáticamente desde Cinematic.cs solo al finalizar la cinemática inicial.
+    /// Se llama automáticamente desde Cinematic.cs al finalizar la animación.
     /// </summary>
     public void MostrarHojaUIExclusiva()
     {
-        // Congelar físicas y movimientos del juego al terminar la secuencia
-        Time.timeScale = 0f;
+        MostrarHojaPorIndice(0); // Element 0 corresponde a Hoja1
+    }
 
-        // Mostrar exclusivamente la Hoja1 (con la X)
-        if (panelHojaUI != null) panelHojaUI.SetActive(true);
-        if (contenedorHUDGameplay != null) contenedorHUDGameplay.SetActive(false);
+    #endregion
+
+    #region Control Genérico de Hojas (Triggers)
+
+    /// <summary>
+    /// Abre cualquier hoja según su índice en la lista y congela el tiempo del juego.
+    /// </summary>
+    public void MostrarHojaPorIndice(int indiceHoja)
+    {
+        if (indiceHoja < 0 || indiceHoja >= listaHojasUI.Count)
+        {
+            Debug.LogWarning($"[UImanager] El índice {indiceHoja} no existe en listaHojasUI.");
+            return;
+        }
+
+        OcultarTodasLasHojas();
+
+        if (listaHojasUI[indiceHoja] != null)
+        {
+            listaHojasUI[indiceHoja].SetActive(true);
+            listaHojasUI[indiceHoja].transform.SetAsLastSibling();
+        }
+
+        if (contenedorHUDGameplay != null)
+        {
+            contenedorHUDGameplay.SetActive(false);
+        }
+
+        Time.timeScale = 0f; // Congela el juego
     }
 
     /// <summary>
-    /// Vincula esta función al evento On Click() del botón 'X' de Hoja1.
+    /// Asigna esta función al evento On Click() del botón 'X' de TODAS las Hojas.
     /// </summary>
-    public void ReanudarJuegoYActivarHUD()
+    public void CerrarHojaActualYReanudar()
     {
-        if (panelHojaUI != null) panelHojaUI.SetActive(false);
+        OcultarTodasLasHojas();
 
-        if (contenedorHUDGameplay != null) contenedorHUDGameplay.SetActive(true);
+        if (contenedorHUDGameplay != null)
+        {
+            contenedorHUDGameplay.SetActive(true);
+        }
 
-        Time.timeScale = 1f;
+        Time.timeScale = 1f; // Reanuda el juego
     }
+
+    #endregion
 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -7,15 +8,18 @@ public class Cinematic : MonoBehaviour
     public PlayableDirector Scene;
 
     [Header("Objetos de Escena")]
-    public GameObject SceneObj;    // Objeto contenedor de la cinemática (ej. "Escena Maya")
-    public GameObject GameplayObj; // Objeto contenedor del Gameplay (Jugador, UI de control, etc.)
+    public GameObject SceneObj;    // Objeto contenedor de la cinemática ("Escena")
+    public GameObject GameplayObj; // Objeto contenedor del Gameplay ("Gameplay")
 
     [Header("Modo de Activación")]
-    [Tooltip("Si se marca, la cinemática iniciará al entrar en el Collider Trigger de este objeto. Si no, arranca en Start().")]
+    [Tooltip("DESMARCAR en la cinemática inicial para que arranque sola al iniciar el juego.")]
     public bool activarPorTrigger = false;
 
+    [Header("Opciones Post-Cinemática (Opcional)")]
+    [Tooltip("MARCAR en la cinemática inicial para abrir Hoja1 al terminar y pausar el juego.")]
+    public bool mostrarUIPostCinematica = false;
+
     private float duracionCinematica;
-    private float t;
     private bool cinematicaEnCurso = false;
 
     private void Start()
@@ -25,63 +29,81 @@ public class Cinematic : MonoBehaviour
             duracionCinematica = (float)Scene.duration;
         }
 
-        // Si NO es por trigger, inicia de inmediato al arrancar el juego
         if (!activarPorTrigger)
         {
             IniciarCinematica();
         }
         else
         {
-            // Aseguramos que la escena de la cinemática empiece oculta si es por Trigger
             if (SceneObj != null) SceneObj.SetActive(false);
-        }
-    }
-
-    private void Update()
-    {
-        // Solo contamos el tiempo si la cinemática ya inició
-        if (!cinematicaEnCurso) return;
-
-        t += Time.deltaTime;
-
-        if (t >= duracionCinematica)
-        {
-            FinalizarCinematica();
         }
     }
 
     public void IniciarCinematica()
     {
+        if (cinematicaEnCurso) return;
+
         cinematicaEnCurso = true;
-        t = 0f;
+        Time.timeScale = 1f; // Garantizar velocidad normal durante la cinemática
 
-        // Activar objeto de cinemática y desactivar Gameplay
+        // 1. Activar contenedor de la cinemática y asegurar Gameplay activo para mantener cámaras
         if (SceneObj != null) SceneObj.SetActive(true);
-        if (GameplayObj != null) GameplayObj.SetActive(false);
+        if (GameplayObj != null) GameplayObj.SetActive(true);
 
-        // Reproducir el Timeline
+        // 2. Reproducir Timeline
         if (Scene != null)
         {
             Scene.time = 0;
+            Scene.Evaluate();
             Scene.Play();
         }
+
+        // Respaldo de tiempo por si la duración reportada es 0
+        float tiempoEspera = (duracionCinematica > 0f) ? duracionCinematica : 3f;
+        StartCoroutine(EsperaFinCinematica(tiempoEspera));
+    }
+
+    private IEnumerator EsperaFinCinematica(float duracion)
+    {
+        yield return new WaitForSecondsRealtime(duracion);
+        FinalizarCinematica();
     }
 
     private void FinalizarCinematica()
     {
         cinematicaEnCurso = false;
 
-        // Desactivar la cinemática y reactivar el Gameplay
+        // 1. Apagar únicamente el objeto visual de la cinemática
         if (SceneObj != null) SceneObj.SetActive(false);
         if (GameplayObj != null) GameplayObj.SetActive(true);
 
-        // Destruimos el componente para que no vuelva a ejecutarse
+        // 2. Notificar al UImanager para abrir la Hoja 1 y pausar el juego
+        if (mostrarUIPostCinematica)
+        {
+            if (UImanager.Instance != null)
+            {
+                UImanager.Instance.MostrarHojaUIExclusiva();
+            }
+            else
+            {
+                UImanager manager = FindFirstObjectByType<UImanager>();
+                if (manager != null)
+                {
+                    manager.MostrarHojaUIExclusiva();
+                }
+                else
+                {
+                    Debug.LogError("[Cinematic] No se encontró el componente UImanager en la escena.");
+                }
+            }
+        }
+
+        // 3. Destruir el componente del script al concluir
         Destroy(this);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // Si la cinemática está configurada por trigger y el objeto que entra es Gasp/Jugador
         if (activarPorTrigger && !cinematicaEnCurso && other.CompareTag("Player"))
         {
             IniciarCinematica();

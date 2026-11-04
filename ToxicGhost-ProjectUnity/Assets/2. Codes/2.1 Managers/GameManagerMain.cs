@@ -45,18 +45,36 @@ public class MainGameManager : MonoBehaviour
         // 1. Buscar automáticamente todos los objetos con Tag "Saveable"
         GameObject[] encontrados = GameObject.FindGameObjectsWithTag("Saveable");
         objetosGuardables.Clear();
-        objetosGuardables.AddRange(encontrados);
 
-        // 2. Buscar automáticamente todos los fantasmas con Tag "Ghost"
-        GameObject[] fantasmasObj = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject obj in encontrados)
+        {
+            // Ignorar el objeto "Escena" o cualquier objeto con el script Cinematic para evitar que el guardado apague la animación inicial
+            if (obj.name != "Escena" && obj.GetComponent<Cinematic>() == null)
+            {
+                objetosGuardables.Add(obj);
+            }
+        }
+
+        // 2. Buscar automáticamente todos los fantasmas (usamos tag "Ghost" o "Enemy" en lugar de confundirlo con "Player")
+        GameObject[] fantasmasObj = GameObject.FindGameObjectsWithTag("Ghost");
+        if (fantasmasObj.Length == 0)
+        {
+            // Respaldo por si tus fantasmas usan otro tag en la escena
+            fantasmasObj = GameObject.FindGameObjectsWithTag("Player");
+        }
+
         fantasmasEnEscena.Clear();
 
         foreach (GameObject g in fantasmasObj)
         {
-            NavMeshAgent agent = g.GetComponent<NavMeshAgent>();
-            if (agent != null)
+            // Aseguramos no incluir al jugador real
+            if (g.transform != jugadorTransform)
             {
-                fantasmasEnEscena.Add(agent);
+                NavMeshAgent agent = g.GetComponent<NavMeshAgent>();
+                if (agent != null)
+                {
+                    fantasmasEnEscena.Add(agent);
+                }
             }
         }
 
@@ -152,7 +170,6 @@ public class MainGameManager : MonoBehaviour
         {
             if (objetosGuardables[i] != null)
             {
-                // Buscar por ID del objeto guardado
                 ObjetoEscenarioData oData = datosActuales.listaObjetosEscenario.Find(x => x.idObjeto == objetosGuardables[i].name);
                 if (oData != null)
                 {
@@ -164,6 +181,7 @@ public class MainGameManager : MonoBehaviour
         Debug.Log("Estado del juego cargado correctamente mediante Tags.");
     }
 
+    [ContextMenu("Borrar Datos Guardados (Reset)")]
     public void BorrarDatosGuardados()
     {
         PlayerPrefs.DeleteKey(SAVE_KEY);
